@@ -1,0 +1,686 @@
+
+----- .\src\App.jsx -----
+import React from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, AuthContext } from './context/AuthContext'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import Productos from './pages/Productos'
+import Clientes from './pages/Clientes'
+import Facturas from './pages/Facturas'
+import AdminPanel from './pages/AdminPanel'
+import { UIProvider } from './context/UIContext'
+import FacturasList from './pages/FacturasList'
+import Home from './pages/Home'
+
+const PrivateRoute = ({ children, roles = [] }) => {
+  const { user } = React.useContext(AuthContext)
+  if (!user) return <Navigate to="/login" replace />
+  if (roles.length && !roles.includes(user.rol)) return <Navigate to="/dashboard" replace />
+  return children
+}
+
+
+export default function App() {
+  return (
+      <UIProvider>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<PrivateRoute roles={["admin", "superadmin", "cajero", "vendedor"]}><Dashboard /></PrivateRoute>} />
+          <Route path="/productos" element={<PrivateRoute roles={["admin"]}><Productos /></PrivateRoute>} />
+          <Route path="/clientes" element={<PrivateRoute roles={["admin","cajero"]}><Clientes /></PrivateRoute>} />
+          <Route path="/facturas" element={<PrivateRoute roles={["cajero","vendedor"]}><Facturas /></PrivateRoute>} />
+          <Route path="/facturas/ver" element={<PrivateRoute roles={["admin","vendedor","cajero"]}><FacturasList /></PrivateRoute>} />
+         <Route path="/admin" element={<PrivateRoute roles={["superadmin","admin"]}><AdminPanel /></PrivateRoute>} />
+
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+    </UIProvider>
+  )
+}
+----- .\src\main.jsx -----
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+)
+
+----- .\src\components\Navbar.jsx -----
+import React, { useContext } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AuthContext } from '../context/AuthContext'
+import { UIContext } from '../context/UIContext'
+import { Menu } from 'lucide-react'
+
+const Navbar = () => {
+  const { user, logout } = useContext(AuthContext)
+  const { toggleSidebar } = useContext(UIContext)
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
+  // Texto central dinámico
+  const getCenterText = () => {
+    if (!user) return "Sistema de Ventas POS e Inventario"
+
+    switch (user.rol) {
+      case "superadmin":
+        return "Panel de Superadministrador"
+      case "admin":
+        return `Administrando negocio: ${user.nombre_empresa || "Mi Empresa"}`
+      case "cajero":
+        return `Caja — ${user.nombre_empresa || "Sucursal Principal"}`
+      case "vendedor":
+        return `Ventas — ${user.nombre_empresa || "Sucursal Principal"}`
+      default:
+        return "Sistema de Ventas"
+    }
+  }
+
+  return (
+    <header className="bg-white shadow-sm border-b">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        {/* Izquierda */}
+        <div className="flex items-center gap-3">
+          {user && (
+            <button
+              onClick={toggleSidebar}
+              className="md:hidden p-2 rounded hover:bg-gray-100"
+            >
+              <Menu className="w-6 h-6 text-gray-700" />
+            </button>
+          )}
+          <h1 className="text-xl font-bold text-blue-600">Sistema de Ventas POS e Inventario</h1>
+        </div>
+
+        {/* Centro */}
+        <div className="hidden md:block text-gray-700 text-sm font-medium">
+          {getCenterText()}
+        </div>
+
+        {/* Derecha */}
+        <div className="flex items-center gap-3">
+          {user && (
+            <div className="text-sm text-gray-600">
+              👤 {user.nombre || "Usuario"}
+            </div>
+          )}
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
+            >
+              Salir
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+            >
+              Entrar
+            </Link>
+          )}
+        </div>
+      </div>
+    </header>
+  )
+}
+
+export default Navbar
+
+----- .\src\components\Sidebar.jsx -----
+import React, { useContext } from 'react'
+import { NavLink } from 'react-router-dom'
+import { AuthContext } from '../context/AuthContext'
+import { UIContext } from '../context/UIContext'
+import { appRoutes } from '../routes_config'
+
+const Sidebar = () => {
+  const { user } = useContext(AuthContext)
+  const { sidebarOpen, closeSidebar } = useContext(UIContext)
+  if (!user) return null
+
+  const { rol } = user
+
+
+
+  return (
+    <>
+      {/* Fondo semitransparente (solo móvil) */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 h-full w-64 bg-white border-r z-50 transform transition-transform duration-300 
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        md:translate-x-0 md:static md:block`}
+      >
+        <nav className="p-4 space-y-2">
+          {appRoutes
+            .filter((r) => r.roles.includes(rol)) // ← solo las permitidas
+            .map((r) => (
+              <NavLink
+                key={r.path}
+                to={r.path}
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'block p-2 rounded bg-blue-50 text-blue-700 font-semibold'
+                    : 'block p-2 rounded hover:bg-gray-50'
+                }
+              >
+                {r.label}
+              </NavLink>
+            ))}
+        </nav>
+      </aside>
+    </>
+  )
+}
+
+export default Sidebar
+
+----- .\src\context\AuthContext.jsx -----
+import React, { createContext, useState, useEffect } from 'react'
+import api from '../api/axios'
+
+export const AuthContext = createContext()
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(() => {
+    const raw = localStorage.getItem('user')
+    return raw ? JSON.parse(raw) : null
+  })
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('token', user.token)
+      localStorage.setItem('user', JSON.stringify(user))
+    } else {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    }
+  }, [user])
+
+  const login = async (email, password) => {
+    setLoading(true)
+    try {
+      const res = await api.post('/auth/login', { email, password })
+      // backend expected: { token, rol, id_usuario, id_admin }
+      const payload = {
+        token: res.data.token,
+        rol: res.data.rol,
+        id_usuario: res.data.id_usuario || null,
+        id_admin: res.data.id_admin || null,
+        nombre: res.data.nombre || null
+      }
+      setUser(payload)
+      return payload
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const logout = () => setUser(null)
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+----- .\src\context\UIContext.jsx -----
+import { createContext, useState } from 'react'
+
+export const UIContext = createContext()
+
+export const UIProvider = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
+  const closeSidebar = () => setSidebarOpen(false)
+
+  return (
+    <UIContext.Provider value={{ sidebarOpen, toggleSidebar, closeSidebar }}>
+      {children}
+    </UIContext.Provider>
+  )
+}
+
+----- .\src\layouts\MainLayout.jsx -----
+import React from 'react'
+import Navbar from '../components/Navbar'
+import Sidebar from '../components/Sidebar'
+
+const MainLayout = ({ children }) => {
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+  <Navbar />
+  <div className="flex flex-1">
+    <Sidebar />
+    <main className="flex-1 p-6 overflow-auto">{children}</main>
+  </div>
+  <footer className="text-center text-sm text-gray-500 py-4">
+    © {new Date().getFullYear()} Sistema de Ventas
+  </footer>
+</div>
+
+  )
+}
+export default MainLayout
+----- .\src\pages\AdminPanel.jsx -----
+import React, { useEffect, useState } from 'react'
+import MainLayout from '../layouts/MainLayout'
+import api from '../api/axios'
+
+const AdminPanel = () => {
+  const [users, setUsers] = useState([])
+  const [nuevo, setNuevo] = useState({ nombre:'', email:'', password:'', rol:'vendedor' })
+
+  const fetchUsers = async () => { try { const res = await api.get('/admins'); setUsers(res.data) } catch(e){ console.error(e) } }
+  useEffect(()=>{ fetchUsers() }, [])
+
+  const crear = async (e) => { e.preventDefault(); await api.post('/admins/crear', nuevo); setNuevo({ nombre:'', email:'', password:'', rol:'vendedor'}); fetchUsers() }
+
+  return (
+    <MainLayout>
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Panel de Administración</h1>
+        <form onSubmit={crear} className="mb-6">
+          <input className="border p-2 rounded w-full mb-2" placeholder="Nombre" value={nuevo.nombre} onChange={e=>setNuevo({...nuevo,nombre:e.target.value})} />
+          <input className="border p-2 rounded w-full mb-2" placeholder="Email" value={nuevo.email} onChange={e=>setNuevo({...nuevo,email:e.target.value})} />
+          <input className="border p-2 rounded w-full mb-2" placeholder="Contraseña" value={nuevo.password} onChange={e=>setNuevo({...nuevo,password:e.target.value})} />
+          <select className="border p-2 rounded w-full mb-2" value={nuevo.rol} onChange={e=>setNuevo({...nuevo,rol:e.target.value})}>
+            
+            <option value="admin">admin</option>
+            <option value="cajero">cajero</option>
+            <option value="vendedor">vendedor</option>
+          </select>
+          <button className="bg-green-600 text-white px-4 py-2 rounded">Crear usuario</button>
+        </form>
+
+        <div className="bg-white rounded shadow">
+          <table className="min-w-full">
+            <thead className="bg-gray-100"><tr><th className="p-2">#</th><th>Nombre</th><th>Email</th><th>Rol</th></tr></thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id_admin} className="border-t"><td className="p-2">{u.id_admin}</td><td className="p-2">{u.nombre}</td><td className="p-2">{u.email}</td><td className="p-2">{u.rol}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </MainLayout>
+  )
+}
+export default AdminPanel
+----- .\src\pages\Clientes.jsx -----
+import React, { useEffect, useState } from 'react'
+import MainLayout from '../layouts/MainLayout'
+import api from '../api/axios'
+
+const Clientes = () => {
+  const [clientes, setClientes] = useState([])
+  const [nuevo, setNuevo] = useState({ nombre:'', telefono:'', direccion:'' })
+
+  const fetchClientes = async () => { try { const res = await api.get('/clientes'); setClientes(res.data) } catch (e) { console.error(e) } }
+  useEffect(()=>{ fetchClientes() }, [])
+
+  const crear = async (e) => { e.preventDefault(); await api.post('/clientes/crear', nuevo); setNuevo({ nombre:'', telefono:'', direccion:''}); fetchClientes() }
+
+  return (
+    <MainLayout>
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Clientes</h1>
+        <form onSubmit={crear} className="mb-4">
+          <input className="border p-2 rounded w-full mb-2" placeholder="Nombre" value={nuevo.nombre} onChange={e=>setNuevo({...nuevo,nombre:e.target.value})} />
+          <input className="border p-2 rounded w-full mb-2" placeholder="Teléfono" value={nuevo.telefono} onChange={e=>setNuevo({...nuevo,telefono:e.target.value})} />
+          <input className="border p-2 rounded w-full mb-2" placeholder="Dirección" value={nuevo.direccion} onChange={e=>setNuevo({...nuevo,direccion:e.target.value})} />
+          <button className="bg-blue-600 text-white p-2 rounded">Crear cliente</button>
+        </form>
+
+        <ul>
+          {clientes.map(c=> (
+            <li key={c.id_cliente} className="bg-white p-3 mb-2 rounded shadow">
+              <div className="font-semibold">{c.nombre}</div>
+              <div className="text-sm text-gray-600">{c.telefono} • {c.direccion}</div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </MainLayout>
+  )
+}
+export default Clientes
+----- .\src\pages\Dashboard.jsx -----
+import React, { useContext } from 'react'
+import MainLayout from '../layouts/MainLayout'
+import { AuthContext } from '../context/AuthContext'
+
+const DashboardContent = () => {
+  const { user } = useContext(AuthContext)
+  return (
+    <div>
+      <h2 className="text-2xl font-semibold mb-4">Panel Principal</h2>
+      {user?.rol === 'superadmin' && (
+        <p>Bienvenido Superadmin. Aquí puedes crear administradores y negocios.</p>
+      )}
+      {user?.rol === 'admin' && (
+        <p>Bienvenido Admin. Puedes gestionar productos, clientes y trabajadores.</p>
+      )}
+      {['cajero','vendedor'].includes(user?.rol) && (
+        <p>Bienvenido. Puedes acceder al módulo de facturación.</p>
+      )}
+    </div>
+  )
+}
+
+const Dashboard = () => (
+  <MainLayout>
+    <DashboardContent />
+  </MainLayout>
+)
+export default Dashboard
+----- .\src\pages\Facturas.jsx -----
+import React, { useEffect, useState } from 'react'
+import MainLayout from '../layouts/MainLayout'
+import api from '../api/axios'
+
+const Facturas = () => {
+  const [productos, setProductos] = useState([])
+  const [clientes, setClientes] = useState([])
+  const [items, setItems] = useState([])
+  const [clienteSeleccionado, setClienteSeleccionado] = useState('')
+  const [facturaCreada, setFacturaCreada] = useState(null)
+
+  useEffect(()=>{ api.get('/productos').then(r=>setProductos(r.data)); api.get('/clientes').then(r=>setClientes(r.data)) }, [])
+
+  const addItem = () => setItems([...items, { id_producto: productos[0]?.id_producto, cantidad: 1 }])
+  const updateItem = (idx, field, value) => { const copy = [...items]; copy[idx][field] = value; setItems(copy) }
+
+  const crearFactura = async (e) => {
+    e.preventDefault()
+    const payload = {
+      productos: items.map(i => ({ id_producto: i.id_producto, cantidad: Number(i.cantidad) })),
+      id_cliente: clienteSeleccionado || null
+    }
+    const res = await api.post('/facturas/crear', payload)
+    setFacturaCreada(res.data)
+    setItems([])
+    setClienteSeleccionado('')
+  }
+
+  return (
+    <MainLayout>
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Crear Factura</h1>
+        <form onSubmit={crearFactura}>
+          <div className="mb-4">
+            <label>Cliente (opcional)</label>
+            <select className="block w-full border p-2 rounded" value={clienteSeleccionado} onChange={e=>setClienteSeleccionado(e.target.value)}>
+              <option value="">Sin cliente</option>
+              {clientes.map(c => <option key={c.id_cliente} value={c.id_cliente}>{c.nombre}</option>)}
+            </select>
+          </div>
+
+          {items.map((it, idx) => (
+            <div key={idx} className="flex gap-2 mb-2">
+              <select className="flex-1 border p-2 rounded" value={it.id_producto} onChange={e=>updateItem(idx,'id_producto', e.target.value)}>
+                {productos.map(p => <option key={p.id_producto} value={p.id_producto}>{p.nombre} — {p.precio}</option>)}
+              </select>
+              <input className="w-24 border p-2 rounded" type="number" value={it.cantidad} onChange={e=>updateItem(idx,'cantidad', e.target.value)} />
+            </div>
+          ))}
+
+          <div className="flex gap-2 mb-4">
+            <button type="button" onClick={addItem} className="bg-green-600 text-white px-4 py-2 rounded">Añadir producto</button>
+            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Crear factura</button>
+          </div>
+        </form>
+
+        {facturaCreada && (
+          <div className="bg-white p-4 rounded shadow my-4">
+            <h2 className="text-xl font-semibold mb-2">Factura #{facturaCreada.id_factura}</h2>
+            <p>Total: ${facturaCreada.total}</p>
+            <p>Cliente: {facturaCreada.cliente || 'N/A'}</p>
+            <p>Fecha: {new Date(facturaCreada.fecha).toLocaleString()}</p>
+          </div>
+        )}
+      </div>
+    </MainLayout>
+  )
+}
+export default Facturas
+----- .\src\pages\FacturasList.jsx -----
+import React, { useEffect, useState } from 'react'
+import MainLayout from '../layouts/MainLayout'
+import api from '../api/axios'
+
+const FacturasList = () => {
+  const [facturas, setFacturas] = useState([])
+
+  useEffect(() => {
+    api.get('/facturas').then(res => setFacturas(res.data))
+  }, [])
+
+  return (
+    <MainLayout>
+      <h1 className="text-2xl font-bold mb-4">Listado de Facturas</h1>
+      <div className="bg-white rounded shadow overflow-auto">
+        <table className="min-w-full">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-2">ID</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {facturas.map(f => (
+              <tr key={f.id_factura} className="border-t">
+                <td className="p-2">{f.id_factura}</td>
+                <td className="p-2">{f.cliente || 'N/A'}</td>
+                <td className="p-2">${f.total}</td>
+                <td className="p-2">{new Date(f.fecha).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </MainLayout>
+  )
+}
+export default FacturasList
+
+----- .\src\pages\Home.jsx -----
+import React from "react";
+import { Link } from "react-router-dom";
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex flex-col">
+      {/* NAVBAR */}
+      <header className="flex justify-between items-center px-6 py-4 bg-white shadow">
+        <h1 className="text-2xl font-bold text-blue-700">
+          Sistema de Ventas POS e Inventario
+        </h1>
+        <Link
+          to="/login"
+          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+        >
+          Ingresar al sistema
+        </Link>
+      </header>
+
+      {/* CONTENIDO PRINCIPAL */}
+      <main className="flex-1 flex flex-col md:flex-row items-center justify-center gap-10 px-6">
+        <div className="max-w-lg text-center md:text-left">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-6 leading-tight">
+            Control total de tus ventas y tu inventario
+          </h2>
+          <p className="text-gray-600 text-lg mb-8">
+            Gestiona tus productos, clientes y facturas desde un solo lugar.
+            Nuestro sistema te ofrece rapidez, seguridad y control para tu negocio.
+          </p>
+          <Link
+            to="/login"
+            className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg text-lg hover:bg-blue-700 transition"
+          >
+            Comenzar ahora
+          </Link>
+        </div>
+
+        <div className="max-w-md animate-fadeIn">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/906/906175.png"
+            alt="Ilustración de ventas e inventario"
+            className="w-full drop-shadow-xl"
+          />
+        </div>
+      </main>
+
+      <footer className="text-center py-4 text-gray-500 text-sm">
+        © {new Date().getFullYear()} Sistema de Ventas POS e Inventario
+      </footer>
+    </div>
+  );
+}
+
+----- .\src\pages\Login.jsx -----
+import React, { useState, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { AuthContext } from '../context/AuthContext'
+
+const Login = () => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const { login } = useContext(AuthContext)
+  const navigate = useNavigate()
+  const [error, setError] = useState(null)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    try {
+      await login(email, password)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err.response?.data?.error || 'Credenciales inválidas')
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form 
+        onSubmit={submit} 
+        className="bg-white p-12 rounded-2xl shadow-lg w-full max-w-sm flex flex-col gap-5 h-[400px]"
+      >
+        <h2 className="text-2xl font-bold text-center">Iniciar sesión</h2>
+
+        {error && <div className="text-red-600 text-center">{error}</div>}
+
+        <input 
+          value={email} 
+          onChange={e=>setEmail(e.target.value)} 
+          placeholder="Email" 
+          className="w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        />
+        <input 
+          value={password} 
+          onChange={e=>setPassword(e.target.value)} 
+          type="password" 
+          placeholder="Contraseña" 
+          className="w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        />
+        <button className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 transition">
+          Entrar
+        </button>
+      </form>
+    </div>
+  )
+}
+export default Login
+
+----- .\src\pages\Productos.jsx -----
+import React, { useEffect, useState, useContext } from 'react'
+import MainLayout from '../layouts/MainLayout'
+import api from '../api/axios'
+import { AuthContext } from '../context/AuthContext'
+
+const Productos = () => {
+  const [productos, setProductos] = useState([])
+  const [nuevo, setNuevo] = useState({ nombre: '', precio: '', stock: 0 })
+  const [error, setError] = useState(null)
+  const { user } = useContext(AuthContext)
+
+  const fetchProductos = async () => {
+    try { const res = await api.get('/productos'); setProductos(res.data) } catch (e) { console.error(e) }
+  }
+  useEffect(()=>{ fetchProductos() }, [])
+
+  const crear = async (e) => {
+    e.preventDefault();
+    try { await api.post('/productos/crear', { nombre: nuevo.nombre, precio: Number(nuevo.precio), stock: Number(nuevo.stock) }); setNuevo({ nombre:'', precio:'', stock:0}); fetchProductos(); }
+    catch (err) { setError(err.response?.data?.error || 'Error al crear') }
+  }
+
+  const eliminar = async (id) => { if(!confirm('Eliminar producto?')) return; await api.delete(`/productos/${id}`); fetchProductos() }
+
+  return (
+    <MainLayout>
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Productos</h1>
+        {error && <div className="text-red-600 mb-2">{error}</div>}
+
+        {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
+          <form onSubmit={crear} className="mb-4 flex gap-2">
+            <input className="border p-2 rounded" placeholder="Nombre" value={nuevo.nombre} onChange={e=>setNuevo({...nuevo,nombre:e.target.value})} />
+            <input className="border p-2 rounded" placeholder="Precio" value={nuevo.precio} onChange={e=>setNuevo({...nuevo,precio:e.target.value})} />
+            <input className="border p-2 rounded" placeholder="Stock" value={nuevo.stock} onChange={e=>setNuevo({...nuevo,stock:e.target.value})} />
+            <button className="bg-green-600 text-white px-4 rounded">Crear</button>
+          </form>
+        )}
+
+        <div className="bg-white rounded shadow overflow-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-100"><tr><th className="p-2">#</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+            <tbody>
+              {productos.map(p=> (
+                <tr key={p.id_producto} className="border-t">
+                  <td className="p-2">{p.id_producto}</td>
+                  <td className="p-2">{p.nombre}</td>
+                  <td className="p-2">{p.precio}</td>
+                  <td className="p-2">{p.stock}</td>
+                  <td className="p-2">
+                    {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
+                      <button onClick={()=>eliminar(p.id_producto)} className="text-red-600">Eliminar</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </MainLayout>
+  )
+}
+export default Productos
