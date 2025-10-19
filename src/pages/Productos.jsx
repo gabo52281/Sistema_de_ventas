@@ -89,7 +89,7 @@ const Productos = () => {
                       onClick={() => {
                         const cantidad = prompt("¿Cuántas unidades deseas añadir?");
                         if (cantidad && !isNaN(cantidad)) {
-                          api.put(`/productos/${p.id_producto}/añadir-stock`, { cantidad: Number(cantidad) })
+                          api.put(`/productos/${p.id_producto}/anadir-stock`, { cantidad: Number(cantidad) })
                             .then(() => fetchProductos())
                             .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
                         }
