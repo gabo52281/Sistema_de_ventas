@@ -79,22 +79,22 @@ const Empleados = () => {
         <SearchBar value={search} onChange={setSearch} placeholder="Buscar empleado o email..." />
 
         <div className="bg-white rounded shadow overflow-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full w-full table-fixed text-sm">
             <thead className="bg-gray-100">
               <tr>
-                <th className="p-2">#</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Rol</th>
+                <th className="p-2 w-12 text-left align-middle">#</th>
+                <th className="p-2 w-1/3 text-left align-middle">Nombre</th>
+                <th className="p-2 w-1/3 text-left align-middle">Email</th>
+                <th className="p-2 w-24 text-left align-middle">Rol</th>
               </tr>
             </thead>
             <tbody>
               {empleadosFiltrados.map((e) => (
-                <tr key={e.id_usuario} className="border-t">
-                  <td className="p-2">{e.id_usuario}</td>
-                  <td className="p-2">{e.nombre}</td>
-                  <td className="p-2">{e.email}</td>
-                  <td className="p-2 capitalize">{e.rol}</td>
+                <tr key={e.id_usuario} className="border-t hover:bg-gray-50">
+                  <td className="p-2 align-middle">{e.id_usuario}</td>
+                  <td className="p-2 align-middle">{e.nombre}</td>
+                  <td className="p-2 align-middle">{e.email}</td>
+                  <td className="p-2 align-middle capitalize">{e.rol}</td>
                 </tr>
               ))}
             </tbody>

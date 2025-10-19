@@ -37,7 +37,7 @@ export const appRoutes = [
   {
     path: '/facturas',
     label: 'Facturar',
-    roles: ['admin', 'vendedor', 'cajero'],
+    roles: ['vendedor', 'cajero'],
   },
   {
     path: '/facturas/ver',

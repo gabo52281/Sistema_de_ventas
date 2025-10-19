@@ -52,7 +52,6 @@ const Productos = () => {
         <h1 className="text-2xl font-bold mb-4">Productos</h1>
         {error && <div className="text-red-600 mb-2">{error}</div>}
 
-        <SearchBar value={search} onChange={setSearch} placeholder="Buscar producto..." />
 
         {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
           <form onSubmit={crear} className="mb-4 flex gap-2">
@@ -69,41 +68,52 @@ const Productos = () => {
           </form>
         )}
 
-        <div className="bg-white rounded shadow overflow-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-100">
-              <tr><th className="p-2">#</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr>
-            </thead>
-            <tbody>
-              {productosFiltrados.map(p => (
-                <tr key={p.id_producto} className="border-t">
-                  <td className="p-2">{p.id_producto}</td>
-                  <td className="p-2">{p.nombre}</td>
-                  <td className="p-2">{p.precio}</td>
-                  <td className="p-2">{p.stock}</td>
-                  <td className="p-2">
-                    {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
-                      <button onClick={() => eliminar(p.id_producto)} className="text-red-600">Eliminar</button>
-                    )}
-                    <button
-                      onClick={() => {
-                        const cantidad = prompt("¿Cuántas unidades deseas añadir?");
-                        if (cantidad && !isNaN(cantidad)) {
-                          api.put(`/productos/${p.id_producto}/anadir-stock`, { cantidad: Number(cantidad) })
-                            .then(() => fetchProductos())
-                            .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
-                        }
-                      }}
-                      className="text-green-600 mr-2"
-                    >
-                      + Añadir stock
-                    </button>
+        <SearchBar value={search} onChange={setSearch} placeholder="Buscar producto..." />
 
-                    
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+        <div className="bg-white rounded shadow overflow-auto">
+          <table className="min-w-full text-sm align-middle">
+           <thead className="bg-gray-100 text-left">
+
+            
+  <tr>
+    <th className="p-2 align-middle">#</th>
+    <th className="p-2 align-middle">Nombre</th>
+    <th className="p-2 align-middle">Precio</th>
+    <th className="p-2 align-middle">Stock</th>
+    <th className="p-2 align-middle">Acciones</th>
+  </tr>
+</thead>
+<tbody>
+  {productosFiltrados.map(p => (
+    <tr key={p.id_producto} className="border-t hover:bg-gray-50">
+      <td className="p-2 align-middle">{p.id_producto}</td>
+      <td className="p-2 align-middle">{p.nombre}</td>
+      <td className="p-2 align-middle">{p.precio}</td>
+      <td className="p-2 align-middle">{p.stock}</td>
+      <td className="p-2 align-middle space-x-2">
+        <button
+          onClick={() => eliminar(p.id_producto)}
+        className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition"
+        >
+          Eliminar
+        </button>
+        <button
+          onClick={() => {
+            const cantidad = prompt("¿Cuántas unidades deseas añadir?");
+            if (cantidad && !isNaN(cantidad)) {
+              api.put(`/productos/${p.id_producto}/add-stock`, { cantidad: Number(cantidad) })
+                .then(() => fetchProductos())
+                .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
+            }
+          }}
+        className="inline-block bg-green-100 text-green-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-green-200 transition"
+        >
+          + Añadir stock
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
           </table>
         </div>
       </div>
