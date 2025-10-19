@@ -12,6 +12,8 @@ import AdminPanel from './pages/AdminPanel'
 import { UIProvider } from './context/UIContext'
 import FacturasList from './pages/FacturasList'
 import Home from './pages/Home'
+import Empleados from './pages/Empleados'
+
 
 const PrivateRoute = ({ children, roles = [] }) => {
   const { user } = React.useContext(AuthContext)
@@ -20,6 +22,13 @@ const PrivateRoute = ({ children, roles = [] }) => {
   return children
 }
 
+const PublicRoute = ({ children }) => {
+  const { user } = React.useContext(AuthContext)
+  if (user) return <Navigate to="/dashboard" replace />
+  return children
+}
+
+
 
 export default function App() {
   return (
@@ -27,14 +36,15 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
           <Route path="/dashboard" element={<PrivateRoute roles={["admin", "superadmin", "cajero", "vendedor"]}><Dashboard /></PrivateRoute>} />
+          <Route path="/empleados" element={<PrivateRoute roles={["admin"]}><Empleados /></PrivateRoute>} />
           <Route path="/productos" element={<PrivateRoute roles={["admin"]}><Productos /></PrivateRoute>} />
           <Route path="/clientes" element={<PrivateRoute roles={["admin","cajero"]}><Clientes /></PrivateRoute>} />
           <Route path="/facturas" element={<PrivateRoute roles={["cajero","vendedor"]}><Facturas /></PrivateRoute>} />
           <Route path="/facturas/ver" element={<PrivateRoute roles={["admin","vendedor","cajero"]}><FacturasList /></PrivateRoute>} />
-         <Route path="/admin" element={<PrivateRoute roles={["superadmin","admin"]}><AdminPanel /></PrivateRoute>} />
+         <Route path="/admin" element={<PrivateRoute roles={["superadmin",]}><AdminPanel /></PrivateRoute>} />
 
         </Routes>
       </BrowserRouter>
@@ -71,21 +81,21 @@ const Navbar = () => {
     navigate('/login')
   }
 
-  // Texto central dinámico
+  // Texto central basado en el rol
   const getCenterText = () => {
-    if (!user) return "Sistema de Ventas POS e Inventario"
+    if (!user) return 'Sistema de Ventas POS e Inventario'
 
     switch (user.rol) {
-      case "superadmin":
-        return "Panel de Superadministrador"
-      case "admin":
-        return `Administrando negocio: ${user.nombre_empresa || "Mi Empresa"}`
-      case "cajero":
-        return `Caja — ${user.nombre_empresa || "Sucursal Principal"}`
-      case "vendedor":
-        return `Ventas — ${user.nombre_empresa || "Sucursal Principal"}`
+      case 'superadmin':
+        return 'Panel de Superadministrador'
+      case 'admin':
+        return 'Panel de Administración'
+      case 'cajero':
+        return 'Panel de Caja'
+      case 'vendedor':
+        return 'Panel de Ventas'
       default:
-        return "Sistema de Ventas"
+        return 'Sistema de Ventas POS e Inventario'
     }
   }
 
@@ -102,7 +112,9 @@ const Navbar = () => {
               <Menu className="w-6 h-6 text-gray-700" />
             </button>
           )}
-          <h1 className="text-xl font-bold text-blue-600">Sistema de Ventas POS e Inventario</h1>
+          <h1 className="text-xl font-bold text-blue-600">
+            Sistema de Ventas POS e Inventario
+          </h1>
         </div>
 
         {/* Centro */}
@@ -114,7 +126,7 @@ const Navbar = () => {
         <div className="flex items-center gap-3">
           {user && (
             <div className="text-sm text-gray-600">
-              👤 {user.nombre || "Usuario"}
+              👤 {user.nombre || 'Usuario'}
             </div>
           )}
           {user ? (
@@ -139,6 +151,21 @@ const Navbar = () => {
 }
 
 export default Navbar
+
+----- .\src\components\SearchBar.jsx -----
+import React from 'react'
+
+const SearchBar = ({ value, onChange, placeholder = "Buscar..." }) => (
+  <input
+    type="text"
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    className="border p-2 rounded w-full mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+)
+
+export default SearchBar
 
 ----- .\src\components\Sidebar.jsx -----
 import React, { useContext } from 'react'
@@ -290,39 +317,93 @@ export default MainLayout
 import React, { useEffect, useState } from 'react'
 import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
+import SearchBar from '../components/SearchBar'
 
 const AdminPanel = () => {
-  const [users, setUsers] = useState([])
-  const [nuevo, setNuevo] = useState({ nombre:'', email:'', password:'', rol:'vendedor' })
+  const [admins, setAdmins] = useState([])
+  const [nuevo, setNuevo] = useState({
+    nombre_negocio: '',
+    email_contacto: '',
+    nombre_admin: '',
+    email_admin: '',
+    password_admin: ''
+  })
+  const [search, setSearch] = useState('')
 
-  const fetchUsers = async () => { try { const res = await api.get('/admins'); setUsers(res.data) } catch(e){ console.error(e) } }
-  useEffect(()=>{ fetchUsers() }, [])
+  const fetchAdmins = async () => {
+    try {
+      const res = await api.get('/admins')
+      setAdmins(res.data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  useEffect(() => { fetchAdmins() }, [])
 
-  const crear = async (e) => { e.preventDefault(); await api.post('/admins/crear', nuevo); setNuevo({ nombre:'', email:'', password:'', rol:'vendedor'}); fetchUsers() }
+  const crear = async (e) => {
+    e.preventDefault()
+    await api.post('/admins/crear', nuevo)
+    setNuevo({
+      nombre_negocio: '',
+      email_contacto: '',
+      nombre_admin: '',
+      email_admin: '',
+      password_admin: ''
+    })
+    fetchAdmins()
+  }
+
+  const adminsFiltrados = admins.filter(a =>
+    a.nombre_negocio.toLowerCase().includes(search.toLowerCase()) ||
+    a.admin_nombre?.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <MainLayout>
       <div>
-        <h1 className="text-2xl font-bold mb-4">Panel de Administración</h1>
-        <form onSubmit={crear} className="mb-6">
-          <input className="border p-2 rounded w-full mb-2" placeholder="Nombre" value={nuevo.nombre} onChange={e=>setNuevo({...nuevo,nombre:e.target.value})} />
-          <input className="border p-2 rounded w-full mb-2" placeholder="Email" value={nuevo.email} onChange={e=>setNuevo({...nuevo,email:e.target.value})} />
-          <input className="border p-2 rounded w-full mb-2" placeholder="Contraseña" value={nuevo.password} onChange={e=>setNuevo({...nuevo,password:e.target.value})} />
-          <select className="border p-2 rounded w-full mb-2" value={nuevo.rol} onChange={e=>setNuevo({...nuevo,rol:e.target.value})}>
-            
-            <option value="admin">admin</option>
-            <option value="cajero">cajero</option>
-            <option value="vendedor">vendedor</option>
-          </select>
-          <button className="bg-green-600 text-white px-4 py-2 rounded">Crear usuario</button>
+        <h1 className="text-2xl font-bold mb-4">Panel del Superadmin</h1>
+
+        <form onSubmit={crear} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input className="border p-2 rounded" placeholder="Nombre del negocio"
+            value={nuevo.nombre_negocio}
+            onChange={e => setNuevo({ ...nuevo, nombre_negocio: e.target.value })} />
+          <input className="border p-2 rounded" placeholder="Email de contacto del negocio"
+            value={nuevo.email_contacto}
+            onChange={e => setNuevo({ ...nuevo, email_contacto: e.target.value })} />
+          <input className="border p-2 rounded" placeholder="Nombre del administrador"
+            value={nuevo.nombre_admin}
+            onChange={e => setNuevo({ ...nuevo, nombre_admin: e.target.value })} />
+          <input className="border p-2 rounded" placeholder="Email del administrador"
+            value={nuevo.email_admin}
+            onChange={e => setNuevo({ ...nuevo, email_admin: e.target.value })} />
+          <input className="border p-2 rounded" type="password" placeholder="Contraseña del administrador"
+            value={nuevo.password_admin}
+            onChange={e => setNuevo({ ...nuevo, password_admin: e.target.value })} />
+          <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full">Crear negocio y admin</button>
         </form>
 
-        <div className="bg-white rounded shadow">
-          <table className="min-w-full">
-            <thead className="bg-gray-100"><tr><th className="p-2">#</th><th>Nombre</th><th>Email</th><th>Rol</th></tr></thead>
+        <SearchBar value={search} onChange={setSearch} placeholder="Buscar negocio o admin..." />
+
+        <div className="bg-white rounded shadow overflow-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-2">#</th>
+                <th>Negocio</th>
+                <th>Email contacto</th>
+                <th>Administrador</th>
+                <th>Email administrador</th>
+              </tr>
+            </thead>
             <tbody>
-              {users.map(u => (
-                <tr key={u.id_admin} className="border-t"><td className="p-2">{u.id_admin}</td><td className="p-2">{u.nombre}</td><td className="p-2">{u.email}</td><td className="p-2">{u.rol}</td></tr>
+              {adminsFiltrados.map(a => (
+                <tr key={a.id_admin} className="border-t">
+                  <td className="p-2">{a.id_admin}</td>
+                  <td className="p-2">{a.nombre_negocio}</td>
+                  <td className="p-2">{a.email_contacto}</td>
+                  <td className="p-2">{a.admin_nombre || 'Sin asignar'}</td>
+                  <td className="p-2">{a.admin_email || '-'}</td>
+                </tr>
               ))}
             </tbody>
           </table>
@@ -332,10 +413,13 @@ const AdminPanel = () => {
   )
 }
 export default AdminPanel
+
 ----- .\src\pages\Clientes.jsx -----
 import React, { useEffect, useState } from 'react'
 import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
+import SearchBar from '../components/SearchBar'
+
 
 const Clientes = () => {
   const [clientes, setClientes] = useState([])
@@ -345,11 +429,18 @@ const Clientes = () => {
   useEffect(()=>{ fetchClientes() }, [])
 
   const crear = async (e) => { e.preventDefault(); await api.post('/clientes/crear', nuevo); setNuevo({ nombre:'', telefono:'', direccion:''}); fetchClientes() }
+  
+  const [search, setSearch] = useState('')
+  const clientesFiltrados = clientes.filter(c =>
+  c.nombre.toLowerCase().includes(search.toLowerCase()) ||
+  c.telefono?.toLowerCase().includes(search.toLowerCase())
+)
 
   return (
     <MainLayout>
       <div>
         <h1 className="text-2xl font-bold mb-4">Clientes</h1>
+        <SearchBar value={search} onChange={setSearch} placeholder="Buscar cliente..." />
         <form onSubmit={crear} className="mb-4">
           <input className="border p-2 rounded w-full mb-2" placeholder="Nombre" value={nuevo.nombre} onChange={e=>setNuevo({...nuevo,nombre:e.target.value})} />
           <input className="border p-2 rounded w-full mb-2" placeholder="Teléfono" value={nuevo.telefono} onChange={e=>setNuevo({...nuevo,telefono:e.target.value})} />
@@ -358,7 +449,7 @@ const Clientes = () => {
         </form>
 
         <ul>
-          {clientes.map(c=> (
+          {clientesFiltrados.map(c=> (
             <li key={c.id_cliente} className="bg-white p-3 mb-2 rounded shadow">
               <div className="font-semibold">{c.nombre}</div>
               <div className="text-sm text-gray-600">{c.telefono} • {c.direccion}</div>
@@ -399,6 +490,116 @@ const Dashboard = () => (
   </MainLayout>
 )
 export default Dashboard
+----- .\src\pages\Empleados.jsx -----
+import React, { useEffect, useState } from 'react'
+import MainLayout from '../layouts/MainLayout'
+import api from '../api/axios'
+import SearchBar from '../components/SearchBar'
+
+const Empleados = () => {
+  const [empleados, setEmpleados] = useState([])
+  const [nuevo, setNuevo] = useState({ nombre: '', email: '', password: '', rol: 'cajero' })
+  const [search, setSearch] = useState('')
+  const [error, setError] = useState(null)
+
+  const fetchEmpleados = async () => {
+    try {
+      const res = await api.get('/users')
+      setEmpleados(res.data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  useEffect(() => { fetchEmpleados() }, [])
+
+  const crear = async (e) => {
+    e.preventDefault()
+    try {
+      await api.post('/users/crear', nuevo)
+      setNuevo({ nombre: '', email: '', password: '', rol: 'cajero' })
+      fetchEmpleados()
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al crear empleado')
+    }
+  }
+
+  const empleadosFiltrados = empleados.filter(e =>
+    e.nombre.toLowerCase().includes(search.toLowerCase()) ||
+    e.email.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <MainLayout>
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Empleados</h1>
+
+        {error && <div className="text-red-600 mb-2">{error}</div>}
+
+        <form onSubmit={crear} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input
+            className="border p-2 rounded"
+            placeholder="Nombre del empleado"
+            value={nuevo.nombre}
+            onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="Email del empleado"
+            value={nuevo.email}
+            onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })}
+          />
+          <input
+            type="password"
+            className="border p-2 rounded"
+            placeholder="Contraseña"
+            value={nuevo.password}
+            onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })}
+          />
+          <select
+            className="border p-2 rounded"
+            value={nuevo.rol}
+            onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value })}
+          >
+            <option value="cajero">Cajero</option>
+            <option value="vendedor">Vendedor</option>
+          </select>
+          <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full">
+            Crear empleado
+          </button>
+        </form>
+
+        <SearchBar value={search} onChange={setSearch} placeholder="Buscar empleado o email..." />
+
+        <div className="bg-white rounded shadow overflow-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-2">#</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+              </tr>
+            </thead>
+            <tbody>
+              {empleadosFiltrados.map((e) => (
+                <tr key={e.id_usuario} className="border-t">
+                  <td className="p-2">{e.id_usuario}</td>
+                  <td className="p-2">{e.nombre}</td>
+                  <td className="p-2">{e.email}</td>
+                  <td className="p-2 capitalize">{e.rol}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </MainLayout>
+  )
+}
+
+export default Empleados
+
 ----- .\src\pages\Facturas.jsx -----
 import React, { useEffect, useState } from 'react'
 import MainLayout from '../layouts/MainLayout'
@@ -473,6 +674,7 @@ export default Facturas
 import React, { useEffect, useState } from 'react'
 import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
+import SearchBar from '../components/SearchBar'
 
 const FacturasList = () => {
   const [facturas, setFacturas] = useState([])
@@ -481,9 +683,18 @@ const FacturasList = () => {
     api.get('/facturas').then(res => setFacturas(res.data))
   }, [])
 
+  const [search, setSearch] = useState('')
+  const facturasFiltradas = facturas.filter(f =>
+  f.cliente.toLowerCase().includes(search.toLowerCase()) ||
+  f.vendedor.toLowerCase().includes(search.toLowerCase())
+)
+
+
   return (
     <MainLayout>
       <h1 className="text-2xl font-bold mb-4">Listado de Facturas</h1>
+      <SearchBar value={search} onChange={setSearch} placeholder="Buscar por cliente o vendedor..." />
+
       <div className="bg-white rounded shadow overflow-auto">
         <table className="min-w-full">
           <thead className="bg-gray-100">
@@ -495,7 +706,7 @@ const FacturasList = () => {
             </tr>
           </thead>
           <tbody>
-            {facturas.map(f => (
+            {facturasFiltradas.map(f => (
               <tr key={f.id_factura} className="border-t">
                 <td className="p-2">{f.id_factura}</td>
                 <td className="p-2">{f.cliente || 'N/A'}</td>
@@ -624,25 +835,49 @@ import React, { useEffect, useState, useContext } from 'react'
 import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
 import { AuthContext } from '../context/AuthContext'
+import SearchBar from '../components/SearchBar'
 
 const Productos = () => {
   const [productos, setProductos] = useState([])
   const [nuevo, setNuevo] = useState({ nombre: '', precio: '', stock: 0 })
   const [error, setError] = useState(null)
+  const [search, setSearch] = useState('')
   const { user } = useContext(AuthContext)
 
   const fetchProductos = async () => {
-    try { const res = await api.get('/productos'); setProductos(res.data) } catch (e) { console.error(e) }
+    try {
+      const res = await api.get('/productos')
+      setProductos(res.data)
+    } catch (e) {
+      console.error(e)
+    }
   }
-  useEffect(()=>{ fetchProductos() }, [])
+  useEffect(() => { fetchProductos() }, [])
 
   const crear = async (e) => {
-    e.preventDefault();
-    try { await api.post('/productos/crear', { nombre: nuevo.nombre, precio: Number(nuevo.precio), stock: Number(nuevo.stock) }); setNuevo({ nombre:'', precio:'', stock:0}); fetchProductos(); }
-    catch (err) { setError(err.response?.data?.error || 'Error al crear') }
+    e.preventDefault()
+    try {
+      await api.post('/productos/crear', {
+        nombre: nuevo.nombre,
+        precio: Number(nuevo.precio),
+        stock: Number(nuevo.stock)
+      })
+      setNuevo({ nombre: '', precio: '', stock: 0 })
+      fetchProductos()
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al crear')
+    }
   }
 
-  const eliminar = async (id) => { if(!confirm('Eliminar producto?')) return; await api.delete(`/productos/${id}`); fetchProductos() }
+  const eliminar = async (id) => {
+    if (!confirm('Eliminar producto?')) return
+    await api.delete(`/productos/${id}`)
+    fetchProductos()
+  }
+
+  const productosFiltrados = productos.filter(p =>
+    p.nombre.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <MainLayout>
@@ -650,20 +885,30 @@ const Productos = () => {
         <h1 className="text-2xl font-bold mb-4">Productos</h1>
         {error && <div className="text-red-600 mb-2">{error}</div>}
 
+        <SearchBar value={search} onChange={setSearch} placeholder="Buscar producto..." />
+
         {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
           <form onSubmit={crear} className="mb-4 flex gap-2">
-            <input className="border p-2 rounded" placeholder="Nombre" value={nuevo.nombre} onChange={e=>setNuevo({...nuevo,nombre:e.target.value})} />
-            <input className="border p-2 rounded" placeholder="Precio" value={nuevo.precio} onChange={e=>setNuevo({...nuevo,precio:e.target.value})} />
-            <input className="border p-2 rounded" placeholder="Stock" value={nuevo.stock} onChange={e=>setNuevo({...nuevo,stock:e.target.value})} />
+            <input className="border p-2 rounded" placeholder="Nombre"
+              value={nuevo.nombre}
+              onChange={e => setNuevo({ ...nuevo, nombre: e.target.value })} />
+            <input className="border p-2 rounded" placeholder="Precio"
+              value={nuevo.precio}
+              onChange={e => setNuevo({ ...nuevo, precio: e.target.value })} />
+            <input className="border p-2 rounded" placeholder="Stock"
+              value={nuevo.stock}
+              onChange={e => setNuevo({ ...nuevo, stock: e.target.value })} />
             <button className="bg-green-600 text-white px-4 rounded">Crear</button>
           </form>
         )}
 
         <div className="bg-white rounded shadow overflow-auto">
           <table className="min-w-full">
-            <thead className="bg-gray-100"><tr><th className="p-2">#</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+            <thead className="bg-gray-100">
+              <tr><th className="p-2">#</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr>
+            </thead>
             <tbody>
-              {productos.map(p=> (
+              {productosFiltrados.map(p => (
                 <tr key={p.id_producto} className="border-t">
                   <td className="p-2">{p.id_producto}</td>
                   <td className="p-2">{p.nombre}</td>
@@ -671,7 +916,7 @@ const Productos = () => {
                   <td className="p-2">{p.stock}</td>
                   <td className="p-2">
                     {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
-                      <button onClick={()=>eliminar(p.id_producto)} className="text-red-600">Eliminar</button>
+                      <button onClick={() => eliminar(p.id_producto)} className="text-red-600">Eliminar</button>
                     )}
                   </td>
                 </tr>

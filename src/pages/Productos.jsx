@@ -85,6 +85,21 @@ const Productos = () => {
                     {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
                       <button onClick={() => eliminar(p.id_producto)} className="text-red-600">Eliminar</button>
                     )}
+                    <button
+                      onClick={() => {
+                        const cantidad = prompt("¿Cuántas unidades deseas añadir?");
+                        if (cantidad && !isNaN(cantidad)) {
+                          api.put(`/productos/${p.id_producto}/añadir-stock`, { cantidad: Number(cantidad) })
+                            .then(() => fetchProductos())
+                            .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
+                        }
+                      }}
+                      className="text-green-600 mr-2"
+                    >
+                      + Añadir stock
+                    </button>
+
+                    
                   </td>
                 </tr>
               ))}
