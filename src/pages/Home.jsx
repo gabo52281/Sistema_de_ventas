@@ -18,7 +18,7 @@ export default function Home() {
       </header>
 
       {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 flex flex-col md:flex-row items-center justify-center gap-10 px-6">
+      <main className="flex-1 flex flex-col md:flex-row items-center justify-center gap-30 px-6">
         <div className="max-w-lg text-center md:text-left">
           <h2 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-6 leading-tight">
             Control total de tus ventas y tu inventario
@@ -37,9 +37,9 @@ export default function Home() {
 
         <div className="max-w-md animate-fadeIn">
           <img
-            src="https://cdn-icons-png.flaticon.com/512/906/906175.png"
+            src="https://cdn-icons-png.flaticon.com/512/950/950258.png"
             alt="Ilustración de ventas e inventario"
-            className="w-full drop-shadow-xl"
+            className="w-3/4 drop-shadow-xl"
           />
         </div>
       </main>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
 import SearchBar from '../components/SearchBar'
+import DataTable from '../components/DataTable'
 
 const AdminPanel = () => {
   const [admins, setAdmins] = useState([])
@@ -68,30 +69,17 @@ const AdminPanel = () => {
 
         <SearchBar value={search} onChange={setSearch} placeholder="Buscar negocio o admin..." />
 
-        <div className="bg-white rounded shadow overflow-auto">
-          <table className="min-w-full w-full table-fixed text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-2 w-12 text-left align-middle">#</th>
-                <th className="p-2 w-1/3 text-left align-middle">Negocio</th>
-                <th className="p-2 w-1/4 text-left align-middle">Email contacto</th>
-                <th className="p-2 w-1/4 text-left align-middle">Administrador</th>
-                <th className="p-2 w-48 text-left align-middle">Email administrador</th>
-              </tr>
-            </thead>
-            <tbody>
-              {adminsFiltrados.map(a => (
-                <tr key={a.id_admin} className="border-t hover:bg-gray-50">
-                  <td className="p-2 align-middle">{a.id_admin}</td>
-                  <td className="p-2 align-middle">{a.nombre_negocio}</td>
-                  <td className="p-2 align-middle">{a.email_contacto}</td>
-                  <td className="p-2 align-middle">{a.admin_nombre || 'Sin asignar'}</td>
-                  <td className="p-2 align-middle">{a.admin_email || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={[
+            { key: 'id_admin', label: '#', className: 'w-12 text-left align-middle' },
+            { key: 'nombre_negocio', label: 'Negocio', className: 'w-1/3 text-left align-middle' },
+            { key: 'email_contacto', label: 'Email contacto', className: 'w-1/4 text-left align-middle' },
+            { key: 'admin_nombre', label: 'Administrador', className: 'w-1/4 text-left align-middle' },
+            { key: 'admin_email', label: 'Email administrador', className: 'w-48 text-left align-middle' }
+          ]}
+          data={adminsFiltrados}
+          rowKey="id_admin"
+        />
       </div>
     </MainLayout>
   )

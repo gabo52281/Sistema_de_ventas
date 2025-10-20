@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
 import { AuthContext } from '../context/AuthContext'
 import SearchBar from '../components/SearchBar'
+import DataTable from '../components/DataTable'
 
 const Productos = () => {
   const [productos, setProductos] = useState([])
@@ -27,7 +28,9 @@ const Productos = () => {
       await api.post('/productos/crear', {
         nombre: nuevo.nombre,
         precio: Number(nuevo.precio),
+        precio_compra: Number(nuevo.precio_compra),
         stock: Number(nuevo.stock)
+        
       })
       setNuevo({ nombre: '', precio: '', stock: 0 })
       fetchProductos()
@@ -49,7 +52,7 @@ const Productos = () => {
   return (
     <MainLayout>
       <div>
-        <h1 className="text-2xl font-bold mb-4">Productos</h1>
+        <h1 className="text-2xl font-bold mb-4">Añade tus productos</h1>
         {error && <div className="text-red-600 mb-2">{error}</div>}
 
 
@@ -61,61 +64,45 @@ const Productos = () => {
             <input className="border p-2 rounded" placeholder="Precio"
               value={nuevo.precio}
               onChange={e => setNuevo({ ...nuevo, precio: e.target.value })} />
+
+            <input className="border p-2 rounded" placeholder="Precio compra"
+              value={nuevo.precio_compra}
+              onChange={e => setNuevo({ ...nuevo, precio_compra: e.target.value })} />
+            
             <input className="border p-2 rounded" placeholder="Stock"
               value={nuevo.stock}
               onChange={e => setNuevo({ ...nuevo, stock: e.target.value })} />
+              
             <button className="bg-green-600 text-white px-4 rounded">Crear</button>
           </form>
         )}
+        <h1 className="text-2xl font-bold mb-4">Productos</h1>
 
         <SearchBar value={search} onChange={setSearch} placeholder="Buscar producto..." />
 
-        <div className="bg-white rounded shadow overflow-auto">
-          <table className="min-w-full text-sm align-middle">
-           <thead className="bg-gray-100 text-left">
-
-            
-  <tr>
-    <th className="p-2 align-middle">#</th>
-    <th className="p-2 align-middle">Nombre</th>
-    <th className="p-2 align-middle">Precio</th>
-    <th className="p-2 align-middle">Stock</th>
-    <th className="p-2 align-middle">Acciones</th>
-  </tr>
-</thead>
-<tbody>
-  {productosFiltrados.map(p => (
-    <tr key={p.id_producto} className="border-t hover:bg-gray-50">
-      <td className="p-2 align-middle">{p.id_producto}</td>
-      <td className="p-2 align-middle">{p.nombre}</td>
-      <td className="p-2 align-middle">{p.precio}</td>
-      <td className="p-2 align-middle">{p.stock}</td>
-      <td className="p-2 align-middle space-x-2">
-        <button
-          onClick={() => eliminar(p.id_producto)}
-        className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition"
-        >
-          Eliminar
-        </button>
-        <button
-          onClick={() => {
-            const cantidad = prompt("¿Cuántas unidades deseas añadir?");
-            if (cantidad && !isNaN(cantidad)) {
-              api.put(`/productos/${p.id_producto}/add-stock`, { cantidad: Number(cantidad) })
-                .then(() => fetchProductos())
-                .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
-            }
-          }}
-        className="inline-block bg-green-100 text-green-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-green-200 transition"
-        >
-          + Añadir stock
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={[
+            { key: 'id_producto', label: '#', className: 'w-12 text-left align-middle' },
+            { key: 'nombre', label: 'Nombre', className: 'w-1/3 text-left align-middle' },
+            { key: 'precio', label: 'Precio', className: 'w-24 text-right align-middle', render: (r) => r.precio },
+            { key: 'stock', label: 'Stock', className: 'w-24 text-left align-middle' }
+          ]}
+          data={productosFiltrados}
+          rowKey="id_producto"
+          actions={(p) => (
+            <>
+              <button onClick={() => eliminar(p.id_producto)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+              <button onClick={() => {
+                const cantidad = prompt("¿Cuántas unidades deseas añadir?");
+                if (cantidad && !isNaN(cantidad)) {
+                  api.put(`/productos/${p.id_producto}/add-stock`, { cantidad: Number(cantidad) })
+                    .then(() => fetchProductos())
+                    .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
+                }
+              }} className="inline-block bg-green-100 text-green-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-green-200 transition">+ Añadir stock</button>
+            </>
+          )}
+        />
       </div>
     </MainLayout>
   )

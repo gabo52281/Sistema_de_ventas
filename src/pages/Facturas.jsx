@@ -8,6 +8,9 @@ const Facturas = () => {
   const [items, setItems] = useState([])
   const [clienteSeleccionado, setClienteSeleccionado] = useState('')
   const [facturaCreada, setFacturaCreada] = useState(null)
+  const [pagoCliente, setPagoCliente] = useState('');
+  const [vuelto, setVuelto] = useState(0);
+
 
   useEffect(()=>{ api.get('/productos').then(r=>setProductos(r.data)); api.get('/clientes').then(r=>setClientes(r.data)) }, [])
 
@@ -45,9 +48,25 @@ const Facturas = () => {
                 {productos.map(p => <option key={p.id_producto} value={p.id_producto}>{p.nombre} — {p.precio}</option>)}
               </select>
               <input className="w-24 border p-2 rounded" type="number" value={it.cantidad} onChange={e=>updateItem(idx,'cantidad', e.target.value)} />
+              
+            
             </div>
+            
+            
           ))}
+        
+          <input 
+              type="number" 
+              className="border p-2 rounded w-full" 
+              placeholder="Monto pagado por el cliente" 
+              value={pagoCliente}
+              onChange={e => setPagoCliente(e.target.value)}
+              />
 
+          
+          
+
+          
           <div className="flex gap-2 mb-4">
             <button type="button" onClick={addItem} className="bg-green-600 text-white px-4 py-2 rounded">Añadir producto</button>
             <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Crear factura</button>
@@ -60,6 +79,10 @@ const Facturas = () => {
             <p>Total: ${facturaCreada.total}</p>
             <p>Cliente: {facturaCreada.cliente || 'N/A'}</p>
             <p>Fecha: {new Date(facturaCreada.fecha).toLocaleString()}</p>
+
+              {facturaCreada && (
+              <p>Vuelto: ${Number(pagoCliente) - facturaCreada.total}</p>
+            )}
           </div>
         )}
       </div>
