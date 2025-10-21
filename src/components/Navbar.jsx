@@ -60,6 +60,9 @@ const Navbar = () => {
           {user && (
             <div className="text-sm text-gray-600">
               👤 {user.nombre || 'Usuario'}
+              {user.nombre_negocio && (
+                <div className="text-2xl text-amber-600"> {user.nombre_negocio}</div>
+              )}
             </div>
           )}
           {user ? (

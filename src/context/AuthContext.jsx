@@ -30,7 +30,8 @@ export const AuthProvider = ({ children }) => {
         rol: res.data.rol,
         id_usuario: res.data.id_usuario || null,
         id_admin: res.data.id_admin || null,
-        nombre: res.data.nombre || null
+        nombre: res.data.nombre || null,
+        nombre_negocio: res.data.nombre_negocio || null
       }
       setUser(payload)
       return payload
