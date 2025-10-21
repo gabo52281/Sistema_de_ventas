@@ -32,6 +32,40 @@ const Empleados = () => {
     }
   }
 
+  const editarEmpleado = async (empleado) => {
+    // Pedimos datos simples vía prompt para no añadir UI extra
+    const nombre = prompt('Nombre', empleado.nombre)
+    if (nombre === null) return // cancel
+    const email = prompt('Email', empleado.email)
+    if (email === null) return
+    const rol = prompt('Rol (cajero|vendedor)', empleado.rol)
+    if (rol === null) return
+    const password = prompt('Nueva contraseña (dejar vacío para no cambiar)')
+
+    try {
+      const payload = { nombre, email, rol }
+      if (password && password.trim() !== '') payload.password = password
+      await api.put(`/users/${empleado.id_usuario}`, payload)
+      alert('Empleado actualizado')
+      fetchEmpleados()
+    } catch (err) {
+      console.error('Error actualizar empleado', err)
+      alert(err.response?.data?.error || 'Error al actualizar empleado')
+    }
+  }
+
+  const eliminarEmpleado = async (id_usuario) => {
+    if (!confirm('¿Eliminar empleado?')) return
+    try {
+      await api.delete(`/users/${id_usuario}`)
+      alert('Empleado eliminado')
+      fetchEmpleados()
+    } catch (err) {
+      console.error('Error eliminar empleado', err)
+      alert(err.response?.data?.error || 'Error al eliminar empleado')
+    }
+  }
+
   const empleadosFiltrados = empleados.filter(e =>
     e.nombre.toLowerCase().includes(search.toLowerCase()) ||
     e.email.toLowerCase().includes(search.toLowerCase())
@@ -88,6 +122,12 @@ const Empleados = () => {
           ]}
           data={empleadosFiltrados}
           rowKey="id_usuario"
+          actions={(u) => (
+            <>
+              <button onClick={() => editarEmpleado(u)} className="inline-block bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-yellow-200 transition">Editar</button>
+              <button onClick={() => eliminarEmpleado(u.id_usuario)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+            </>
+          )}
         />
       </div>
     </MainLayout>

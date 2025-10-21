@@ -7,7 +7,7 @@ import DataTable from '../components/DataTable'
 
 const Productos = () => {
   const [productos, setProductos] = useState([])
-  const [nuevo, setNuevo] = useState({ nombre: '', precio: '', stock: 0 })
+  const [nuevo, setNuevo] = useState({ nombre: '', precio: '', precio_compra: '', stock: 0 })
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const { user } = useContext(AuthContext)
@@ -95,7 +95,8 @@ const Productos = () => {
               <button onClick={() => {
                 const cantidad = prompt("¿Cuántas unidades deseas añadir?");
                 if (cantidad && !isNaN(cantidad)) {
-                  api.put(`/productos/${p.id_producto}/add-stock`, { cantidad: Number(cantidad) })
+                  // Nota: el backend expone el endpoint en español '/anadir-stock'
+                  api.put(`/productos/${p.id_producto}/anadir-stock`, { cantidad: Number(cantidad) })
                     .then(() => fetchProductos())
                     .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
                 }
