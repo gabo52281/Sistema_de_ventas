@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
 import SearchBar from '../components/SearchBar'
 import DataTable from '../components/DataTable'
+import { ToastContext } from '../context/ToastContext'
 
 const Empleados = () => {
   const [empleados, setEmpleados] = useState([])
+  const { addToast } = useContext(ToastContext)
   const [nuevo, setNuevo] = useState({ nombre: '', email: '', password: '', rol: 'cajero' })
   const [search, setSearch] = useState('')
   const [error, setError] = useState(null)
@@ -29,6 +31,7 @@ const Empleados = () => {
       fetchEmpleados()
     } catch (err) {
       setError(err.response?.data?.error || 'Error al crear empleado')
+      addToast(err.response?.data?.error || 'Error al crear empleado', 'error')
     }
   }
 
@@ -46,11 +49,11 @@ const Empleados = () => {
       const payload = { nombre, email, rol }
       if (password && password.trim() !== '') payload.password = password
       await api.put(`/users/${empleado.id_usuario}`, payload)
-      alert('Empleado actualizado')
+      addToast('Empleado actualizado', 'success')
       fetchEmpleados()
     } catch (err) {
       console.error('Error actualizar empleado', err)
-      alert(err.response?.data?.error || 'Error al actualizar empleado')
+      addToast(err.response?.data?.error || 'Error al actualizar empleado', 'error')
     }
   }
 
@@ -58,11 +61,11 @@ const Empleados = () => {
     if (!confirm('¿Eliminar empleado?')) return
     try {
       await api.delete(`/users/${id_usuario}`)
-      alert('Empleado eliminado')
+      addToast('Empleado eliminado', 'success')
       fetchEmpleados()
     } catch (err) {
       console.error('Error eliminar empleado', err)
-      alert(err.response?.data?.error || 'Error al eliminar empleado')
+      addToast(err.response?.data?.error || 'Error al eliminar empleado', 'error')
     }
   }
 

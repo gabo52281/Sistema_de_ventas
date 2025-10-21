@@ -1,15 +1,28 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
 import SearchBar from '../components/SearchBar'
 import DataTable from '../components/DataTable'
+import { ToastContext } from '../context/ToastContext'
 
 const FacturasList = () => {
   const [facturas, setFacturas] = useState([])
+  const { addToast } = useContext(ToastContext)
 
   useEffect(() => {
     api.get('/facturas').then(res => setFacturas(res.data))
   }, [])
+
+  const eliminarFactura = async (id) => {
+    if (!confirm('¿Eliminar factura?')) return
+    try {
+      await api.delete(`/facturas/${id}`)
+      setFacturas(prev => prev.filter(f => f.id_factura !== id))
+    } catch (err) {
+      console.error('Error eliminar factura', err)
+      addToast(err.response?.data?.error || 'Error al eliminar factura', 'error')
+    }
+  }
 
 
 
@@ -34,6 +47,11 @@ const FacturasList = () => {
         ]}
         data={facturasFiltradas}
         rowKey="id_factura"
+        actions={(f) => (
+          <>
+            <button onClick={() => eliminarFactura(f.id_factura)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+          </>
+        )}
       />
     </MainLayout>
   )

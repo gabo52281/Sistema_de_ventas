@@ -8,6 +8,7 @@ import Clientes from './pages/Clientes'
 import Facturas from './pages/Facturas'
 import AdminPanel from './pages/AdminPanel'
 import { UIProvider } from './context/UIContext'
+import { ToastProvider } from './context/ToastContext'
 import FacturasList from './pages/FacturasList'
 import Home from './pages/Home'
 import Empleados from './pages/Empleados'
@@ -31,7 +32,8 @@ const PublicRoute = ({ children }) => {
 export default function App() {
   return (
       <UIProvider>
-    <AuthProvider>
+  <ToastProvider>
+  <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -46,7 +48,8 @@ export default function App() {
 
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+      </ToastProvider>
     </UIProvider>
   )
 }
