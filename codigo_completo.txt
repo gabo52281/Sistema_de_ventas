@@ -10,10 +10,11 @@ import Clientes from './pages/Clientes'
 import Facturas from './pages/Facturas'
 import AdminPanel from './pages/AdminPanel'
 import { UIProvider } from './context/UIContext'
+import { ToastProvider } from './context/ToastContext'
 import FacturasList from './pages/FacturasList'
 import Home from './pages/Home'
 import Empleados from './pages/Empleados'
-
+import Reportes from './pages/Reportes'
 
 const PrivateRoute = ({ children, roles = [] }) => {
   const { user } = React.useContext(AuthContext)
@@ -33,12 +34,15 @@ const PublicRoute = ({ children }) => {
 export default function App() {
   return (
       <UIProvider>
-    <AuthProvider>
+  <ToastProvider>
+  <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
           <Route path="/dashboard" element={<PrivateRoute roles={["admin", "superadmin", "cajero", "vendedor"]}><Dashboard /></PrivateRoute>} />
+          <Route path="/reportes" element={ <PrivateRoute roles={["admin"]}><Reportes /></PrivateRoute>} />
+
           <Route path="/empleados" element={<PrivateRoute roles={["admin"]}><Empleados /></PrivateRoute>} />
           <Route path="/productos" element={<PrivateRoute roles={["admin"]}><Productos /></PrivateRoute>} />
           <Route path="/clientes" element={<PrivateRoute roles={["admin","cajero"]}><Clientes /></PrivateRoute>} />
@@ -48,7 +52,8 @@ export default function App() {
 
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+      </ToastProvider>
     </UIProvider>
   )
 }
@@ -174,6 +179,9 @@ const Navbar = () => {
           {user && (
             <div className="text-sm text-gray-600">
               👤 {user.nombre || 'Usuario'}
+              {user.nombre_negocio && (
+                <div className="text-2xl text-amber-600"> {user.nombre_negocio}</div>
+              )}
             </div>
           )}
           {user ? (
@@ -271,6 +279,29 @@ const Sidebar = () => {
 
 export default Sidebar
 
+----- .\src\components\ToastContainer.jsx -----
+import React, { useContext } from 'react'
+import { ToastContext } from '../context/ToastContext'
+
+const ToastContainer = () => {
+  const { toasts, removeToast } = useContext(ToastContext)
+
+  return (
+    <div className="fixed right-4 bottom-4 flex flex-col gap-2 z-50">
+      {toasts.map(t => (
+        <div key={t.id} className={`px-4 py-2 rounded shadow ${t.type === 'error' ? 'bg-red-500 text-white' : t.type === 'success' ? 'bg-green-500 text-white' : 'bg-gray-800 text-white'}`}>
+          <div className="flex items-center justify-between gap-4">
+            <div>{t.message}</div>
+            <button onClick={() => removeToast(t.id)} className="text-sm opacity-80">x</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export default ToastContainer
+
 ----- .\src\context\AuthContext.jsx -----
 import React, { createContext, useState, useEffect } from 'react'
 import api from '../api/axios'
@@ -304,7 +335,8 @@ export const AuthProvider = ({ children }) => {
         rol: res.data.rol,
         id_usuario: res.data.id_usuario || null,
         id_admin: res.data.id_admin || null,
-        nombre: res.data.nombre || null
+        nombre: res.data.nombre || null,
+        nombre_negocio: res.data.nombre_negocio || null
       }
       setUser(payload)
       return payload
@@ -321,6 +353,31 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   )
 }
+----- .\src\context\ToastContext.jsx -----
+import React, { createContext, useState, useCallback } from 'react'
+
+export const ToastContext = createContext()
+
+export const ToastProvider = ({ children }) => {
+  const [toasts, setToasts] = useState([])
+
+  const addToast = useCallback((message, type = 'info', timeout = 4000) => {
+    const id = Date.now().toString()
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id))
+    }, timeout)
+  }, [])
+
+  const removeToast = useCallback((id) => setToasts(prev => prev.filter(t => t.id !== id)), [])
+
+  return (
+    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+      {children}
+    </ToastContext.Provider>
+  )
+}
+
 ----- .\src\context\UIContext.jsx -----
 import { createContext, useState } from 'react'
 
@@ -343,20 +400,21 @@ export const UIProvider = ({ children }) => {
 import React from 'react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
+import ToastContainer from '../components/ToastContainer'
 
 const MainLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-  <Navbar />
-  <div className="flex flex-1">
-    <Sidebar />
-    <main className="flex-1 p-6 overflow-auto">{children}</main>
-  </div>
-  <footer className="text-center text-sm text-gray-500 py-4">
-    © {new Date().getFullYear()} Sistema de Ventas
-  </footer>
-</div>
-
+      <Navbar />
+      <div className="flex flex-1">
+        <Sidebar />
+        <main className="flex-1 p-6 overflow-auto">{children}</main>
+      </div>
+      <footer className="text-center text-sm text-gray-500 py-4">
+        © {new Date().getFullYear()} Sistema de Ventas
+      </footer>
+      <ToastContainer />
+    </div>
   )
 }
 export default MainLayout
@@ -559,14 +617,16 @@ const Dashboard = () => (
 )
 export default Dashboard
 ----- .\src\pages\Empleados.jsx -----
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
 import SearchBar from '../components/SearchBar'
 import DataTable from '../components/DataTable'
+import { ToastContext } from '../context/ToastContext'
 
 const Empleados = () => {
   const [empleados, setEmpleados] = useState([])
+  const { addToast } = useContext(ToastContext)
   const [nuevo, setNuevo] = useState({ nombre: '', email: '', password: '', rol: 'cajero' })
   const [search, setSearch] = useState('')
   const [error, setError] = useState(null)
@@ -590,6 +650,41 @@ const Empleados = () => {
       fetchEmpleados()
     } catch (err) {
       setError(err.response?.data?.error || 'Error al crear empleado')
+      addToast(err.response?.data?.error || 'Error al crear empleado', 'error')
+    }
+  }
+
+  const editarEmpleado = async (empleado) => {
+    // Pedimos datos simples vía prompt para no añadir UI extra
+    const nombre = prompt('Nombre', empleado.nombre)
+    if (nombre === null) return // cancel
+    const email = prompt('Email', empleado.email)
+    if (email === null) return
+    const rol = prompt('Rol (cajero|vendedor)', empleado.rol)
+    if (rol === null) return
+    const password = prompt('Nueva contraseña (dejar vacío para no cambiar)')
+
+    try {
+      const payload = { nombre, email, rol }
+      if (password && password.trim() !== '') payload.password = password
+      await api.put(`/users/${empleado.id_usuario}`, payload)
+      addToast('Empleado actualizado', 'success')
+      fetchEmpleados()
+    } catch (err) {
+      console.error('Error actualizar empleado', err)
+      addToast(err.response?.data?.error || 'Error al actualizar empleado', 'error')
+    }
+  }
+
+  const eliminarEmpleado = async (id_usuario) => {
+    if (!confirm('¿Eliminar empleado?')) return
+    try {
+      await api.delete(`/users/${id_usuario}`)
+      addToast('Empleado eliminado', 'success')
+      fetchEmpleados()
+    } catch (err) {
+      console.error('Error eliminar empleado', err)
+      addToast(err.response?.data?.error || 'Error al eliminar empleado', 'error')
     }
   }
 
@@ -649,6 +744,12 @@ const Empleados = () => {
           ]}
           data={empleadosFiltrados}
           rowKey="id_usuario"
+          actions={(u) => (
+            <>
+              <button onClick={() => editarEmpleado(u)} className="inline-block bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-yellow-200 transition">Editar</button>
+              <button onClick={() => eliminarEmpleado(u.id_usuario)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+            </>
+          )}
         />
       </div>
     </MainLayout>
@@ -658,111 +759,240 @@ const Empleados = () => {
 export default Empleados
 
 ----- .\src\pages\Facturas.jsx -----
-import React, { useEffect, useState } from 'react'
-import MainLayout from '../layouts/MainLayout'
-import api from '../api/axios'
+// ✅ Facturas.jsx Mejorado con formato COP y total en tiempo real
+import React, { useEffect, useState, useContext } from 'react';
+import MainLayout from '../layouts/MainLayout';
+import api from '../api/axios';
+import { ToastContext } from '../context/ToastContext';
+
+// ✅ Función para formatear moneda COP
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(value || 0);
+};
 
 const Facturas = () => {
-  const [productos, setProductos] = useState([])
-  const [clientes, setClientes] = useState([])
-  const [items, setItems] = useState([])
-  const [clienteSeleccionado, setClienteSeleccionado] = useState('')
-  const [facturaCreada, setFacturaCreada] = useState(null)
+  const [productos, setProductos] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [items, setItems] = useState([]);
+  const [suggestionsIndex, setSuggestionsIndex] = useState(-1);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState('');
+  const [cedulaBusqueda, setCedulaBusqueda] = useState('');
+  const [facturaCreada, setFacturaCreada] = useState(null);
   const [pagoCliente, setPagoCliente] = useState('');
   const [vuelto, setVuelto] = useState(0);
+  const { addToast } = useContext(ToastContext);
 
+  // ✅ Cargar productos y clientes
+  useEffect(() => {
+    api.get('/productos').then(r => setProductos(r.data));
+    api.get('/clientes').then(r => setClientes(r.data));
+  }, []);
 
-  useEffect(()=>{ api.get('/productos').then(r=>setProductos(r.data)); api.get('/clientes').then(r=>setClientes(r.data)) }, [])
+  // ✅ Total actual en tiempo real
+  const totalActual = items.reduce((sum, item) => {
+    const producto = productos.find(p => p.id_producto == item.id_producto);
+    return sum + (producto ? producto.precio * item.cantidad : 0);
+  }, 0);
 
-  const addItem = () => setItems([...items, { id_producto: productos[0]?.id_producto, cantidad: 1 }])
-  const updateItem = (idx, field, value) => { const copy = [...items]; copy[idx][field] = value; setItems(copy) }
+  // ✅ Calcular vuelto con totalActual
+  useEffect(() => {
+    const pago = Number(pagoCliente) || 0;
+    setVuelto(pago - totalActual);
+  }, [pagoCliente, totalActual]);
+
+  const addItem = () =>
+    setItems([...items, { id_producto: productos[0]?.id_producto || '', cantidad: 1, query: productos[0]?.nombre || '' }]);
+
+  const updateItem = (idx, field, value) => {
+    const newItems = [...items];
+    // normalizar cantidad a número
+    if (field === 'cantidad') {
+      newItems[idx][field] = Number(value);
+    } else {
+      newItems[idx][field] = value;
+    }
+    setItems(newItems);
+  };
+
+  const removeItem = (idx) => {
+    setItems(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const crearFactura = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     const payload = {
-      productos: items.map(i => ({ id_producto: i.id_producto, cantidad: Number(i.cantidad) })),
-      id_cliente: clienteSeleccionado || null
+      productos: items.map(i => ({ id_producto: Number(i.id_producto), cantidad: Number(i.cantidad) })),
+      id_cliente: clienteSeleccionado || null,
+    };
+    const res = await api.post('/facturas/crear', payload);
+    setFacturaCreada(res.data);
+    setItems([]);
+    setClienteSeleccionado('');
+    setPagoCliente('');
+  };
+
+  const buscarClientePorCedula = () => {
+    const ced = cedulaBusqueda.trim();
+    if (!ced) return addToast('Ingresa la cédula a buscar', 'error');
+    const encontrado = clientes.find(c => String(c.cedula) === ced);
+    if (encontrado) {
+      setClienteSeleccionado(encontrado.id_cliente);
+      setCedulaBusqueda('');
+    } else {
+      addToast('Cliente no encontrado', 'error');
     }
-    const res = await api.post('/facturas/crear', payload)
-    setFacturaCreada(res.data)
-    setItems([])
-    setClienteSeleccionado('')
-  }
+  };
+
+  const clienteObj = clientes.find(c => String(c.id_cliente) === String(clienteSeleccionado));
 
   return (
     <MainLayout>
-      <div>
-        <h1 className="text-2xl font-bold mb-4">Crear Factura</h1>
+      <div className="max-w-6xl mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6">Crear Factura</h1>
+
         <form onSubmit={crearFactura}>
-          <div className="mb-4">
-            <label>Cliente (opcional)</label>
-            <select className="block w-full border p-2 rounded" value={clienteSeleccionado} onChange={e=>setClienteSeleccionado(e.target.value)}>
-              <option value="">Sin cliente</option>
-              {clientes.map(c => <option key={c.id_cliente} value={c.id_cliente}>{c.nombre}</option>)}
-            </select>
-          </div>
-
-          {items.map((it, idx) => (
-            <div key={idx} className="flex gap-2 mb-2">
-              <select className="flex-1 border p-2 rounded" value={it.id_producto} onChange={e=>updateItem(idx,'id_producto', e.target.value)}>
-                {productos.map(p => <option key={p.id_producto} value={p.id_producto}>{p.nombre} — {p.precio}</option>)}
-              </select>
-              <input className="w-24 border p-2 rounded" type="number" value={it.cantidad} onChange={e=>updateItem(idx,'cantidad', e.target.value)} />
-              
-            
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Left: productos (col-span 8) */}
+            <div className="md:col-span-8 bg-white p-6 rounded-xl shadow">
+              <h2 className="text-xl font-semibold mb-4">Productos</h2>
+              <div className="max-h-72 overflow-auto">
+                {items.map((it, idx) => {
+                  const q = String(it.query || '');
+                  const filtered = productos.filter(p => p.nombre.toLowerCase().includes(q.toLowerCase()));
+                  return (
+                    <div key={idx} className="relative flex gap-4 mb-2 items-center">
+                      <div className="flex-1">
+                        <input
+                          className="w-full border border-gray-300 p-2 rounded-lg"
+                          value={it.query || ''}
+                          onChange={e => updateItem(idx, 'query', e.target.value)}
+                          onFocus={() => setSuggestionsIndex(idx)}
+                          onBlur={() => setTimeout(() => setSuggestionsIndex(-1), 150)}
+                          placeholder="Escribe para buscar producto..."
+                        />
+                        {suggestionsIndex === idx && filtered.length > 0 && (
+                          <ul className="absolute z-20 bg-white border rounded mt-1 max-h-40 overflow-auto w-full shadow">
+                            {filtered.map(p => (
+                              <li key={p.id_producto} className="p-2 hover:bg-gray-100 cursor-pointer"
+                                onMouseDown={() => {
+                                  // seleccionar producto
+                                  updateItem(idx, 'id_producto', p.id_producto);
+                                  updateItem(idx, 'query', p.nombre);
+                                  setSuggestionsIndex(-1);
+                                }}>
+                                {p.nombre} — {formatCurrency(p.precio)}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <input type="number" className="w-24 border border-gray-300 p-2 rounded-lg " value={it.cantidad}
+                        onChange={e => updateItem(idx, 'cantidad', e.target.value)} />
+                      <button type="button" onClick={() => removeItem(idx)} className="ml-2 text-sm bg-red-100 text-red-700 px-3 py-1 rounded">Eliminar</button>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-3">
+                <button type="button" onClick={addItem} className="bg-green-600 text-white px-4 py-2 rounded-lg">Añadir producto</button>
+              </div>
             </div>
-            
-            
-          ))}
-        
-          <input 
-              type="number" 
-              className="border p-2 rounded w-full" 
-              placeholder="Monto pagado por el cliente" 
-              value={pagoCliente}
-              onChange={e => setPagoCliente(e.target.value)}
-              />
 
-          
-          
+            {/* Right: cliente + total (col-span 4) */}
+            <div className="md:col-span-4 space-y-4">
+              <div className="bg-white p-6 rounded-xl shadow">
+                <h2 className="text-xl font-semibold mb-3">Datos del Cliente</h2>
+                <label className="block text-sm text-black-400 mb-1">Cliente (opcional):</label>
+                <select className="w-full border border-gray-300 p-2 rounded-lg mb-3" value={clienteSeleccionado} onChange={e => setClienteSeleccionado(e.target.value)}>
+                  <option value="">Sin cliente</option>
+                  {clientes.map(c => <option key={c.id_cliente} value={c.id_cliente}>{c.nombre}</option>)}
+                </select>
 
-          
-          <div className="flex gap-2 mb-4">
-            <button type="button" onClick={addItem} className="bg-green-600 text-white px-4 py-2 rounded">Añadir producto</button>
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Crear factura</button>
+                <label className="block text-sm text-black-400 mb-1">Buscar por cédula:</label>
+                <div className="flex gap-2 mb-3">
+                  <input className="flex-1 min-w-0 border-gray-300 p-2 rounded-lg" value={cedulaBusqueda} onChange={e => setCedulaBusqueda(e.target.value)} placeholder="Cédula" />
+                  <button type="button" onClick={buscarClientePorCedula} className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg">Buscar</button>
+                </div>
+
+                {clienteObj && (
+                  <div className="mt-2 p-3 bg-gray-50 border rounded-lg">
+                    <p className="font-medium">{clienteObj.nombre}</p>
+                    <p className="text-sm text-black-400">Cédula: {clienteObj.cedula}</p>
+                    <button type="button" onClick={() => setClienteSeleccionado('')} className="text-sm text-red-600 mt-2">Quitar</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow">
+                <p className="text-lg font-semibold mb-2">Total</p>
+                <p className="text-2xl font-bold mb-4">{formatCurrency(totalActual)}</p>
+                <label className="block text-sm text-black-400 mb-1 ">Monto pagado</label>
+                <input type="text" className="w-full p-2 rounded-lg mb-3 border border-black"
+                  placeholder="Ej: 50.000"
+                  value={pagoCliente ? formatCurrency(pagoCliente) : ''}
+                  onChange={(e) => { const raw = e.target.value.replace(/[^0-9]/g, ''); setPagoCliente(raw); }} />
+                <p className="text-sm text-black-400">Vuelto: {formatCurrency(vuelto)}</p>
+              </div>
+
+              <div className="sticky bottom-6">
+                <button type="submit" disabled={items.length === 0} className={`w-full py-3 rounded-lg text-white font-semibold ${items.length === 0 ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>Crear factura</button>
+              </div>
+            </div>
           </div>
         </form>
 
+        {/* Modal simple para factura creada */}
         {facturaCreada && (
-          <div className="bg-white p-4 rounded shadow my-4">
-            <h2 className="text-xl font-semibold mb-2">Factura #{facturaCreada.id_factura}</h2>
-            <p>Total: ${facturaCreada.total}</p>
-            <p>Cliente: {facturaCreada.cliente || 'N/A'}</p>
-            <p>Fecha: {new Date(facturaCreada.fecha).toLocaleString()}</p>
-
-              {facturaCreada && (
-              <p>Vuelto: ${Number(pagoCliente) - facturaCreada.total}</p>
-            )}
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl shadow max-w-md w-full">
+              <h2 className="text-xl font-semibold mb-3">Factura #{facturaCreada.id_factura}</h2>
+              <p>Total: {formatCurrency(facturaCreada.total)}</p>
+              <p>Cliente: {facturaCreada.cliente || 'N/A'}</p>
+              <p>Fecha: {new Date(facturaCreada.fecha).toLocaleString()}</p>
+              <p>Vuelto: {formatCurrency(vuelto)}</p>
+              <div className="mt-4 flex justify-end">
+                <button onClick={() => setFacturaCreada(null)} className="bg-blue-600 text-white px-4 py-2 rounded-lg">Cerrar</button>
+              </div>
+            </div>
           </div>
         )}
       </div>
     </MainLayout>
-  )
-}
-export default Facturas
+  );
+};
+
+export default Facturas;
+
 ----- .\src\pages\FacturasList.jsx -----
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import MainLayout from '../layouts/MainLayout'
 import api from '../api/axios'
 import SearchBar from '../components/SearchBar'
 import DataTable from '../components/DataTable'
+import { ToastContext } from '../context/ToastContext'
 
 const FacturasList = () => {
   const [facturas, setFacturas] = useState([])
+  const { addToast } = useContext(ToastContext)
 
   useEffect(() => {
     api.get('/facturas').then(res => setFacturas(res.data))
   }, [])
+
+  const eliminarFactura = async (id) => {
+    if (!confirm('¿Eliminar factura?')) return
+    try {
+      await api.delete(`/facturas/${id}`)
+      setFacturas(prev => prev.filter(f => f.id_factura !== id))
+    } catch (err) {
+      console.error('Error eliminar factura', err)
+      addToast(err.response?.data?.error || 'Error al eliminar factura', 'error')
+    }
+  }
 
 
 
@@ -787,6 +1017,11 @@ const FacturasList = () => {
         ]}
         data={facturasFiltradas}
         rowKey="id_factura"
+        actions={(f) => (
+          <>
+            <button onClick={() => eliminarFactura(f.id_factura)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+          </>
+        )}
       />
     </MainLayout>
   )
@@ -902,56 +1137,70 @@ const Login = () => {
 export default Login
 
 ----- .\src\pages\Productos.jsx -----
-import React, { useEffect, useState, useContext } from 'react'
-import MainLayout from '../layouts/MainLayout'
-import api from '../api/axios'
-import { AuthContext } from '../context/AuthContext'
-import SearchBar from '../components/SearchBar'
-import DataTable from '../components/DataTable'
+import React, { useEffect, useState, useContext } from 'react';
+import MainLayout from '../layouts/MainLayout';
+import api from '../api/axios';
+import { AuthContext } from '../context/AuthContext';
+import SearchBar from '../components/SearchBar';
+import DataTable from '../components/DataTable';
 
 const Productos = () => {
-  const [productos, setProductos] = useState([])
-  const [nuevo, setNuevo] = useState({ nombre: '', precio: '', stock: 0 })
-  const [error, setError] = useState(null)
-  const [search, setSearch] = useState('')
-  const { user } = useContext(AuthContext)
+  const [productos, setProductos] = useState([]);
+  const [nuevo, setNuevo] = useState({ nombre: '', precio: '', precio_compra: '', stock: 0 });
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
+  const { user } = useContext(AuthContext);
+
+  useEffect(() => {
+    fetchProductos();
+  }, []);
 
   const fetchProductos = async () => {
     try {
-      const res = await api.get('/productos')
-      setProductos(res.data)
+      const res = await api.get('/productos');
+      setProductos(res.data);
     } catch (e) {
-      console.error(e)
+      console.error("Error al obtener productos", e);
     }
-  }
-  useEffect(() => { fetchProductos() }, [])
+  };
+
+  // 🔹 Función para limpiar valores monetarios
+  const limpiarNumero = (valor) => {
+    return Number(String(valor).replace(/[^0-9]/g, '')) || 0;
+  };
+
+  // 👉 Función para formatear número como moneda local COP (ej: 50.000)
+  const formatCOP = (value) => {
+    if (!value) return '';
+    return new Intl.NumberFormat('es-CO').format(value);
+  };
 
   const crear = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
       await api.post('/productos/crear', {
         nombre: nuevo.nombre,
-        precio: Number(nuevo.precio),
-        precio_compra: Number(nuevo.precio_compra),
-        stock: Number(nuevo.stock)
-        
-      })
-      setNuevo({ nombre: '', precio: '', stock: 0 })
-      fetchProductos()
+        precio: limpiarNumero(nuevo.precio),
+        precio_compra: limpiarNumero(nuevo.precio_compra),
+        stock: limpiarNumero(nuevo.stock)
+      });
+
+      setNuevo({ nombre: '', precio: '', precio_compra: '', stock: 0 });
+      fetchProductos();
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear')
+      setError(err.response?.data?.error || 'Error al crear producto');
     }
-  }
+  };
 
   const eliminar = async (id) => {
-    if (!confirm('Eliminar producto?')) return
-    await api.delete(`/productos/${id}`)
-    fetchProductos()
-  }
+    if (!confirm('¿Eliminar producto?')) return;
+    await api.delete(`/productos/${id}`);
+    fetchProductos();
+  };
 
   const productosFiltrados = productos.filter(p =>
     p.nombre.toLowerCase().includes(search.toLowerCase())
-  )
+  );
 
   return (
     <MainLayout>
@@ -959,56 +1208,178 @@ const Productos = () => {
         <h1 className="text-2xl font-bold mb-4">Añade tus productos</h1>
         {error && <div className="text-red-600 mb-2">{error}</div>}
 
-
         {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
-          <form onSubmit={crear} className="mb-4 flex gap-2">
-            <input className="border p-2 rounded" placeholder="Nombre"
-              value={nuevo.nombre}
-              onChange={e => setNuevo({ ...nuevo, nombre: e.target.value })} />
-            <input className="border p-2 rounded" placeholder="Precio"
-              value={nuevo.precio}
-              onChange={e => setNuevo({ ...nuevo, precio: e.target.value })} />
+          <form onSubmit={crear} className="mb-4 flex gap-2 flex-wrap">
 
-            <input className="border p-2 rounded" placeholder="Precio compra"
-              value={nuevo.precio_compra}
-              onChange={e => setNuevo({ ...nuevo, precio_compra: e.target.value })} />
-            
-            <input className="border p-2 rounded" placeholder="Stock"
+            {/* Nombre */}
+            <input
+              className="border p-2 rounded"
+              placeholder="Nombre"
+              value={nuevo.nombre}
+              onChange={e => setNuevo({ ...nuevo, nombre: e.target.value })}
+            />
+
+            {/* ✅ Precio con formato al escribir */}
+            <input
+              className="border p-2 rounded"
+              placeholder="Precio"
+              value={nuevo.precio ? formatCOP(nuevo.precio) : ''}
+              onChange={(e) => {
+                const raw = limpiarNumero(e.target.value);
+                setNuevo({ ...nuevo, precio: raw });
+              }}
+            />
+
+            {/* ✅ Precio de compra también con formato */}
+            <input
+              className="border p-2 rounded"
+              placeholder="Precio compra"
+              value={nuevo.precio_compra ? formatCOP(nuevo.precio_compra) : ''}
+              onChange={(e) => {
+                const raw = limpiarNumero(e.target.value);
+                setNuevo({ ...nuevo, precio_compra: raw });
+              }}
+            />
+
+            <input
+              className="border p-2 rounded"
+              placeholder="Stock"
               value={nuevo.stock}
-              onChange={e => setNuevo({ ...nuevo, stock: e.target.value })} />
-              
-            <button className="bg-green-600 text-white px-4 rounded">Crear</button>
+              onChange={e => setNuevo({ ...nuevo, stock: limpiarNumero(e.target.value) })}
+            />
+
+            <button className="bg-green-600 text-white px-4 rounded hover:bg-green-700">
+              Crear
+            </button>
           </form>
         )}
+
         <h1 className="text-2xl font-bold mb-4">Productos</h1>
 
         <SearchBar value={search} onChange={setSearch} placeholder="Buscar producto..." />
 
         <DataTable
           columns={[
-            { key: 'id_producto', label: '#', className: 'w-12 text-left align-middle' },
-            { key: 'nombre', label: 'Nombre', className: 'w-1/3 text-left align-middle' },
-            { key: 'precio', label: 'Precio', className: 'w-24 text-right align-middle', render: (r) => r.precio },
-            { key: 'stock', label: 'Stock', className: 'w-24 text-left align-middle' }
+            { key: 'id_producto', label: '#', className: 'w-12 text-left' },
+            { key: 'nombre', label: 'Nombre', className: 'w-1/3 text-left' },
+            { key: 'precio', label: 'Precio', className: 'w-24 text-right', render: (r) => r.precio },
+            { key: 'stock', label: 'Stock', className: 'w-24 text-left' }
           ]}
           data={productosFiltrados}
           rowKey="id_producto"
           actions={(p) => (
             <>
-              <button onClick={() => eliminar(p.id_producto)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
-              <button onClick={() => {
-                const cantidad = prompt("¿Cuántas unidades deseas añadir?");
-                if (cantidad && !isNaN(cantidad)) {
-                  api.put(`/productos/${p.id_producto}/add-stock`, { cantidad: Number(cantidad) })
-                    .then(() => fetchProductos())
-                    .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
-                }
-              }} className="inline-block bg-green-100 text-green-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-green-200 transition">+ Añadir stock</button>
+              <button
+                onClick={() => eliminar(p.id_producto)}
+                className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full hover:bg-red-200"
+              >
+                Eliminar
+              </button>
+
+              <button
+                onClick={() => {
+                  const cantidad = prompt("¿Cuántas unidades deseas añadir?");
+                  if (cantidad && !isNaN(cantidad)) {
+                    api.put(`/productos/${p.id_producto}/anadir-stock`, { cantidad: Number(cantidad) })
+                      .then(() => fetchProductos())
+                      .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
+                  }
+                }}
+                className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full hover:bg-green-200"
+              >
+                + Añadir stock
+              </button>
             </>
           )}
         />
       </div>
     </MainLayout>
-  )
-}
-export default Productos
+  );
+};
+
+export default Productos;
+
+----- .\src\pages\Reportes.jsx -----
+import React, { useState, useContext } from 'react';
+import MainLayout from '../layouts/MainLayout';
+import api from '../api/axios';
+import DataTable from '../components/DataTable';
+import { ToastContext } from '../context/ToastContext';
+
+const formatCurrency = (value) => new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  minimumFractionDigits: 0,
+}).format(value || 0);
+
+const Reportes = () => {
+  const [inicio, setInicio] = useState('');
+  const [fin, setFin] = useState('');
+  const [reporte, setReporte] = useState(null);
+  const { addToast } = useContext(ToastContext);
+
+  const generarReporte = async (e) => {
+    e.preventDefault();
+    if (!inicio || !fin) return addToast('Selecciona ambas fechas', 'error');
+
+    try {
+      const res = await api.get(`/facturas/reporte?inicio=${inicio}&fin=${fin}`);
+      setReporte(res.data);
+    } catch (err) {
+      console.error(err);
+      addToast('Error generando reporte', 'error');
+    }
+  };
+
+  return (
+    <MainLayout>
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">📊 Reporte de Ventas</h1>
+
+        <form onSubmit={generarReporte} className="flex flex-col md:flex-row gap-4 mb-6">
+          <div>
+            <label className="text-sm font-medium">Fecha inicio</label>
+            <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)}
+              className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Fecha fin</label>
+            <input type="date" value={fin} onChange={(e) => setFin(e.target.value)}
+              className="border p-2 rounded w-full" />
+          </div>
+          <button className="bg-blue-600 text-white px-6 py-2 rounded mt-6 md:mt-0">
+            Generar Reporte
+          </button>
+        </form>
+
+        {/* Si ya hay reporte */}
+        {reporte && (
+          <div>
+            <div className="bg-white p-4 rounded shadow mb-6">
+              <p><strong>Fecha:</strong> {reporte.inicio} — {reporte.fin}</p>
+              <p><strong>Total ventas:</strong> {formatCurrency(reporte.total_ventas)}</p>
+              <p><strong>Ganancia total:</strong> {formatCurrency(reporte.total_ganancia)}</p>
+              <p><strong>Facturas generadas:</strong> {reporte.cantidad_facturas}</p>
+            </div>
+
+            <h2 className="text-xl font-bold mb-3">Detalle de facturas</h2>
+            <DataTable
+              columns={[
+                { key: 'id_factura', label: '#', className: 'w-12' },
+                { key: 'fecha', label: 'Fecha', render: (f) => new Date(f.fecha).toLocaleString() },
+                { key: 'cliente', label: 'Cliente' },
+                { key: 'vendedor', label: 'Vendedor' },
+                { key: 'total', label: 'Total', render: (f) => formatCurrency(f.total) },
+                { key: 'ganancia', label: 'Ganancia', render: (f) => formatCurrency(f.ganancia) },
+              ]}
+              data={reporte.detalle}
+              rowKey="id_factura"
+            />
+          </div>
+        )}
+      </div>
+    </MainLayout>
+  );
+};
+
+export default Reportes;

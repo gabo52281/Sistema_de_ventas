@@ -1,6 +1,8 @@
 import React, { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
+import NotasLogin from "../components/NotasLogin";
+
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -46,7 +48,13 @@ const Login = () => {
           Entrar
         </button>
       </form>
+          <div className="flex flex-col items-center">
+  {/* formulario de login aquí */}
+  <NotasLogin />
+</div>
     </div>
+
+    
   )
 }
 export default Login

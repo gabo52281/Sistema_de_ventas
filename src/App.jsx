@@ -12,7 +12,7 @@ import { ToastProvider } from './context/ToastContext'
 import FacturasList from './pages/FacturasList'
 import Home from './pages/Home'
 import Empleados from './pages/Empleados'
-
+import Reportes from './pages/Reportes'
 
 const PrivateRoute = ({ children, roles = [] }) => {
   const { user } = React.useContext(AuthContext)
@@ -39,6 +39,7 @@ export default function App() {
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
           <Route path="/dashboard" element={<PrivateRoute roles={["admin", "superadmin", "cajero", "vendedor"]}><Dashboard /></PrivateRoute>} />
+          <Route path="/reportes" element={ <PrivateRoute roles={["admin"]}><Reportes /></PrivateRoute>} />
           <Route path="/empleados" element={<PrivateRoute roles={["admin"]}><Empleados /></PrivateRoute>} />
           <Route path="/productos" element={<PrivateRoute roles={["admin"]}><Productos /></PrivateRoute>} />
           <Route path="/clientes" element={<PrivateRoute roles={["admin","cajero"]}><Clientes /></PrivateRoute>} />
