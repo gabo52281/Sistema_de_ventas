@@ -121,10 +121,10 @@ const Productos = () => {
 
         <DataTable
           columns={[
-            { key: 'id_producto', label: '#', className: 'w-12 text-left' },
-            { key: 'nombre', label: 'Nombre', className: 'w-1/3 text-left' },
-            { key: 'precio', label: 'Precio', className: 'w-24 text-left', render: (r) => r.precio },
-            { key: 'stock', label: 'Stock', className: 'w-24 text-left' }
+            { key: 'id_producto', label: '#', className: 'w-1/20 text-left' },
+            { key: 'nombre', label: 'Nombre', className: 'w-1/5 text-left ' },
+            { key: 'precio', label: 'Precio', className: 'w-1/5 text-left', render: (r) => r.precio },
+            { key: 'stock', label: 'Stock', className: 'w-1/5 text-left' }
           ]}
           data={productosFiltrados}
           rowKey="id_producto"

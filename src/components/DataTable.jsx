@@ -12,13 +12,13 @@ const DataTable = ({ columns = [], data = [], rowKey = 'id', actions = null }) =
               {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left font-semibold text-gray-700 truncate ${col.className || ''}`}
+                  className={`px-4 py-3 text-left font-bold text-black-700 truncate ${col.className || ''}`}
                 >
                   {col.label}
                 </th>
               ))}
               {actions && (
-                <th className="px-4 py-3 text-center font-semibold text-gray-700 w-32">
+                <th className="px-4 py-3 text-center font-bold text-black-700 w-32">
                   Acciones
                 </th>
               )}
@@ -32,6 +32,7 @@ const DataTable = ({ columns = [], data = [], rowKey = 'id', actions = null }) =
                   <td
                     key={col.key}
                     className={`px-4 py-3 text-gray-900 truncate ${col.cellClass || ''}`}
+                    
                   >
                     {col.render ? col.render(row) : row[col.key]}
                   </td>
@@ -56,7 +57,7 @@ const DataTable = ({ columns = [], data = [], rowKey = 'id', actions = null }) =
             <div className="space-y-3">
               {columns.map(col => (
                 <div key={col.key} className="flex justify-between items-start gap-4">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide min-w-20">
+                  <span className="text-xs font-medium text-black-500 uppercase tracking-wide min-w-20">
                     {col.label}
                   </span>
                   <span className={`text-sm text-gray-900 text-right flex-1 ${col.cellClass || ''}`}>

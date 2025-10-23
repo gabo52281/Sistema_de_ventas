@@ -40,7 +40,7 @@ const FacturasList = () => {
 
       <DataTable
         columns={[
-          { key: 'id_factura', label: '#', className: 'w-12 text-left align-middle' },
+          { key: 'id_factura', label: '#', className: 'w-15 text-left align-middle' },
           { key: 'cliente', label: 'Cliente', className: 'w-1/4 text-left align-middle' },
           { key: 'total', label: 'Total', className: 'w-1/4 text-left align-middle', render: (r) => `$${r.total}` },
           { key: 'fecha', label: 'Fecha', className: 'w-1/3 text-left align-middle', render: (r) => new Date(r.fecha).toLocaleString() }
