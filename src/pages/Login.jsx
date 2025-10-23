@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import NotasLogin from "../components/NotasLogin";
@@ -19,44 +20,76 @@ const Login = () => {
       setError(err.response?.data?.error || "Credenciales inválidas");
     }
   };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
-
-      {/* FORMULARIO DE LOGIN */}
-      <form
-        onSubmit={submit}
-        className="bg-white p-12 rounded-2xl shadow-lg w-full max-w-sm flex flex-col gap-5"
-      >
-        <h2 className="text-2xl font-bold text-center">Iniciar sesión</h2>
-
-        {error && <div className="text-red-600 text-center">{error}</div>}
-
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          className="w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-          placeholder="Contraseña"
-          className="w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        <button className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 transition">
-          Entrar
-        </button>
-      </form>
-
-      {/* ✅ NOTAS FLOTANTES, NO INTERFIERE CON EL LOGIN */}
-      <NotasLogin />
-
+return (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative overflow-hidden">
+    
+    {/* Efecto de fondo animado sutil */}
+    <div className="absolute inset-0 opacity-30">
+      <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
     </div>
-  );
+
+    {/* ✅ LOGO SUPERIOR IZQUIERDA */}
+    <Link
+      to="/"
+      className="absolute top-6 left-8 text-2xl font-bold text-white hover:text-blue-300 transition-all duration-300 z-10 drop-shadow-lg"
+      style={{ fontFamily: 'Montserrat, sans-serif' }}
+    >
+      Facturer
+    </Link>
+
+    {/* CONTENEDOR DEL LOGIN */}
+    <form
+      onSubmit={submit}
+      className="bg-white/95 backdrop-blur-sm p-10 rounded-2xl shadow-2xl w-full max-w-sm space-y-6 relative z-10 border border-white/20"
+    >
+      <div className="text-center space-y-2">
+        <h2 className="text-3xl font-bold text-gray-800">Bienvenido</h2>
+        <p className="text-gray-500 text-sm">Ingresa tus credenciales para continuar</p>
+      </div>
+
+      {error && (
+        <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg border border-red-200 animate-shake">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div className="relative">
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            className="w-full border border-gray-300 p-3.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
+          />
+        </div>
+
+        <div className="relative">
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            placeholder="Contraseña"
+            className="w-full border border-gray-300 p-3.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
+          />
+        </div>
+      </div>
+
+      <button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer">
+        Entrar
+      </button>
+
+      <div className="text-center">
+        <a href="#" className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+    </form>
+
+    {/* NOTAS FLOTANTES (se mantienen discretas) */}
+    <NotasLogin />
+  </div>
+);
 };
 
 export default Login;

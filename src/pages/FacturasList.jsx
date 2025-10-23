@@ -49,7 +49,7 @@ const FacturasList = () => {
         rowKey="id_factura"
         actions={(f) => (
           <>
-            <button onClick={() => eliminarFactura(f.id_factura)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+            <button onClick={() => eliminarFactura(f.id_factura)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition cursor-pointer">Eliminar</button>
           </>
         )}
       />

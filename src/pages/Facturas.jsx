@@ -44,7 +44,7 @@ const Facturas = () => {
   }, [pagoCliente, totalActual]);
 
   const addItem = () =>
-    setItems([...items, { id_producto: productos[0]?.id_producto || '', cantidad: 1, query: productos[0]?.nombre || '' }]);
+  setItems([...items, { id_producto: '', cantidad: 1, query: '' }]);
 
   const updateItem = (idx, field, value) => {
     const newItems = [...items];
@@ -87,34 +87,57 @@ const Facturas = () => {
   };
 
   const clienteObj = clientes.find(c => String(c.id_cliente) === String(clienteSeleccionado));
+const clearItems = () => {
+  setItems([]);
+};
+
+const assignIdByName = (idx) => {
+  const text = items[idx].query?.trim().toLowerCase();
+  if (!text) return;
+  const matched = productos.find(p => p.nombre.toLowerCase() === text);
+  if (matched) {
+    updateItem(idx, 'id_producto', matched.id_producto);
+  }
+};
+
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Crear Factura</h1>
+      <div className="max-w-6xl mx-auto p-2">
+        <h1 className="text-2xl font-bold mb-2">Crear Factura</h1>
 
         <form onSubmit={crearFactura}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Left: productos (col-span 8) */}
-            <div className="md:col-span-8 bg-white p-6 rounded-xl shadow">
+            
+           {/* Left: productos (col-span 8) */}
+<div className="md:col-span-8 bg-white p-6 rounded-xl shadow max-h-[80vh] overflow-auto">
               <h2 className="text-xl font-semibold mb-4">Productos</h2>
-              <div className="max-h-72 overflow-auto">
+              <div className="space-y-2">
                 {items.map((it, idx) => {
                   const q = String(it.query || '');
                   const filtered = productos.filter(p => p.nombre.toLowerCase().includes(q.toLowerCase()));
                   return (
-                    <div key={idx} className="relative flex gap-4 mb-2 items-center">
-                      <div className="flex-1">
-                        <input
-                          className="w-full border border-gray-300 p-2 rounded-lg"
-                          value={it.query || ''}
-                          onChange={e => updateItem(idx, 'query', e.target.value)}
-                          onFocus={() => setSuggestionsIndex(idx)}
-                          onBlur={() => setTimeout(() => setSuggestionsIndex(-1), 150)}
-                          placeholder="Escribe para buscar producto..."
-                        />
+                    <div key={idx} className="flex gap-4 items-center">
+                      <div className="flex-1 relative">
+                   <input
+  className={`w-full border p-2 rounded-lg
+    ${it.id_producto ? 'border-green-400' : 'border-red-600'}`}
+  value={it.query || ''}
+  onChange={e => {
+    const value = e.target.value;
+    updateItem(idx, 'query', value);
+    updateItem(idx, 'id_producto', ''); // resetear id mientras escribe
+  }}
+  onFocus={() => setSuggestionsIndex(idx)}
+  onBlur={() => {
+    setTimeout(() => setSuggestionsIndex(-1), 150);
+    assignIdByName(idx); // asignar id si el nombre coincide
+  }}
+  placeholder="Escribe para buscar producto..."
+/>
+
                         {suggestionsIndex === idx && filtered.length > 0 && (
-                          <ul className="absolute z-20 bg-white border rounded mt-1 max-h-40 overflow-auto w-full shadow">
+                          <ul className="absolute z-50 bg-white border rounded mt-1 max-h-60 overflow-auto w-full shadow-lg left-0 right-0">
                             {filtered.map(p => (
                               <li key={p.id_producto} className="p-2 hover:bg-gray-100 cursor-pointer"
                                 onMouseDown={() => {
@@ -136,10 +159,19 @@ const Facturas = () => {
                   );
                 })}
               </div>
-              <div className="mt-3">
-                <button type="button" onClick={addItem} className="bg-green-600 text-white px-4 py-2 rounded-lg">Añadir producto</button>
+                <div className="mt-3  flex gap-2">
+                  <button type="button" onClick={addItem} className="bg-green-600 text-white px-4 py-2 rounded-lg cursor-pointer">Añadir producto</button>
+                   {items.length > 0 && (
+    <button
+      type="button"
+      onClick={clearItems}
+      className="bg-red-600 text-white px-4 py-2 rounded-lg cursor-pointer"
+    >
+      Limpiar todo
+    </button>
+  )}
+                </div>
               </div>
-            </div>
 
             {/* Right: cliente + total (col-span 4) */}
             <div className="md:col-span-4 space-y-4">
@@ -154,14 +186,14 @@ const Facturas = () => {
                 <label className="block text-sm text-black-400 mb-1">Buscar por cédula:</label>
                 <div className="flex gap-2 mb-3">
                   <input className="flex-1 min-w-0 border-gray-300 p-2 rounded-lg" value={cedulaBusqueda} onChange={e => setCedulaBusqueda(e.target.value)} placeholder="Cédula" />
-                  <button type="button" onClick={buscarClientePorCedula} className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg">Buscar</button>
+                  <button type="button" onClick={buscarClientePorCedula} className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg cursor-pointer">Buscar</button>
                 </div>
 
                 {clienteObj && (
                   <div className="mt-2 p-3 bg-gray-50 border rounded-lg">
                     <p className="font-medium">{clienteObj.nombre}</p>
                     <p className="text-sm text-black-400">Cédula: {clienteObj.cedula}</p>
-                    <button type="button" onClick={() => setClienteSeleccionado('')} className="text-sm text-red-600 mt-2">Quitar</button>
+                    <button type="button" onClick={() => setClienteSeleccionado('')} className="text-sm text-red-600 mt-2 cursor-pointer">Quitar</button>
                   </div>
                 )}
               </div>
@@ -169,6 +201,25 @@ const Facturas = () => {
               <div className="bg-white p-6 rounded-xl shadow">
                 <p className="text-lg font-semibold mb-2">Total</p>
                 <p className="text-2xl font-bold mb-4">{formatCurrency(totalActual)}</p>
+                {/* ✅ Detalle de productos agregados */}
+                  {items.length > 0 && (
+                    <div className="mb-4 border-t pt-3">
+                      <p className="text-sm font-semibold mb-2">Detalle:</p>
+                      <ul className="space-y-1 max-h-32 overflow-auto text-sm">
+                        {items.map((it, idx) => {
+                          const p = productos.find(prod => prod.id_producto == it.id_producto);
+                          if (!p) return null;
+                          return (
+                            <li key={idx} className="flex justify-between">
+                              <span>{it.cantidad} × {p.nombre}</span>
+                              <span>{formatCurrency(p.precio * it.cantidad)}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+
                 <label className="block text-sm text-black-400 mb-1 ">Monto pagado</label>
                 <input type="text" className="w-full p-2 rounded-lg mb-3 border border-black"
                   placeholder="Ej: 50.000"
@@ -178,7 +229,17 @@ const Facturas = () => {
               </div>
 
               <div className="sticky bottom-6">
-                <button type="submit" disabled={items.length === 0} className={`w-full py-3 rounded-lg text-white font-semibold ${items.length === 0 ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>Crear factura</button>
+                <button
+                  type="submit"
+                  disabled={items.length === 0 || (Number(pagoCliente) || 0) < totalActual}
+                  className={`cursor-pointer w-full py-3 rounded-lg text-white font-semibold ${
+                    items.length === 0 || (Number(pagoCliente) || 0) < totalActual
+                      ? 'bg-gray-400'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  Crear factura
+                </button>
               </div>
             </div>
           </div>
@@ -194,7 +255,7 @@ const Facturas = () => {
               <p>Fecha: {new Date(facturaCreada.fecha).toLocaleString()}</p>
               <p>Vuelto: {formatCurrency(vuelto)}</p>
               <div className="mt-4 flex justify-end">
-                <button onClick={() => setFacturaCreada(null)} className="bg-blue-600 text-white px-4 py-2 rounded-lg">Cerrar</button>
+                <button onClick={() => setFacturaCreada(null)} className="bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer">Cerrar</button>
               </div>
             </div>
           </div>

@@ -62,7 +62,7 @@ const NotasLogin = () => {
         </div>
         <button
           onClick={() => setMinimizado(!minimizado)}
-          className="bg-gray-100 hover:bg-gray-200 transition p-1 rounded-md"
+          className="bg-gray-100 hover:bg-gray-200 transition p-1 rounded-md cursor-pointer"
         >
           {minimizado ? <FaExpand /> : <FaMinus />}
         </button>

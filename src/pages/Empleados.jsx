@@ -109,7 +109,7 @@ const Empleados = () => {
             <option value="cajero">Cajero</option>
             <option value="vendedor">Vendedor</option>
           </select>
-          <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full">
+          <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full cursor-pointer">
             Crear empleado
           </button>
         </form>
@@ -127,8 +127,8 @@ const Empleados = () => {
           rowKey="id_usuario"
           actions={(u) => (
             <>
-              <button onClick={() => editarEmpleado(u)} className="inline-block bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-yellow-200 transition">Editar</button>
-              <button onClick={() => eliminarEmpleado(u.id_usuario)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+              <button onClick={() => editarEmpleado(u)} className="inline-block bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-yellow-200 transition cursor-pointer">Editar</button>
+              <button onClick={() => eliminarEmpleado(u.id_usuario)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition cursor-pointer">Eliminar</button>
             </>
           )}
         />

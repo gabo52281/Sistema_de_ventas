@@ -15,10 +15,11 @@ export const appRoutes = [
     roles: ["admin"] 
   },
 
+  // 🔐 Rutas para admin: Reportes
   {
   path: '/reportes',
   label: 'Reportes',
-  roles: ['admin', 'superadmin']
+  roles: ['admin']
   },
 
 

@@ -45,7 +45,7 @@ const Reportes = () => {
             <input type="date" value={fin} onChange={(e) => setFin(e.target.value)}
               className="border p-2 rounded w-full" />
           </div>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded mt-6 md:mt-0">
+          <button className="bg-blue-600 text-white px-6 py-2 rounded mt-6 md:mt-0 cursor-pointer">
             Generar Reporte
           </button>
         </form>

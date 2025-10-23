@@ -9,7 +9,7 @@ const MainLayout = ({ children }) => {
       <Navbar />
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <main className="flex-1 p-4 overflow-auto">{children}</main>
       </div>
       <footer className="text-center text-sm text-gray-500 py-4">
         © {new Date().getFullYear()} Sistema de Ventas

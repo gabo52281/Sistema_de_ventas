@@ -109,7 +109,7 @@ const Productos = () => {
               onChange={e => setNuevo({ ...nuevo, stock: limpiarNumero(e.target.value) })}
             />
 
-            <button className="bg-green-600 text-white px-4 rounded hover:bg-green-700">
+            <button className="bg-green-600 text-white px-4 rounded hover:bg-green-700 cursor-pointer">
               Crear
             </button>
           </form>
@@ -132,7 +132,7 @@ const Productos = () => {
             <>
               <button
                 onClick={() => eliminar(p.id_producto)}
-                className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full hover:bg-red-200"
+                className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full hover:bg-red-200 cursor-pointer"
               >
                 Eliminar
               </button>
@@ -146,7 +146,7 @@ const Productos = () => {
                       .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
                   }
                 }}
-                className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full hover:bg-green-200"
+                className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full hover:bg-green-200 cursor-pointer"
               >
                 + Añadir stock
               </button>

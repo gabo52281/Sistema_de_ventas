@@ -51,7 +51,7 @@ const Clientes = () => {
           <input className="border p-2 rounded" placeholder="Teléfono" value={nuevo.telefono} onChange={e=>setNuevo({...nuevo,telefono:e.target.value})} />
           <input className="border p-2 rounded" placeholder="Dirección" value={nuevo.direccion} onChange={e=>setNuevo({...nuevo,direccion:e.target.value})} />
           <input className="border p-2 rounded" placeholder="Cédula" value={nuevo.cedula} onChange={e=>setNuevo({...nuevo,cedula:e.target.value})} />
-          <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-full">Crear cliente</button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-full cursor-pointer">Crear cliente</button>
         </form>
 
         <h1 className="text-2xl font-bold mb-4">Mis clientes</h1>
@@ -68,7 +68,7 @@ const Clientes = () => {
           rowKey="id_cliente"
           actions={(c) => (
             <>
-              <button onClick={() => eliminar(c.id_cliente)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+              <button onClick={() => eliminar(c.id_cliente)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition cursor-pointer">Eliminar</button>
             </>
           )}
         />
