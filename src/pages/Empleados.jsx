@@ -119,8 +119,8 @@ const Empleados = () => {
         <DataTable
           columns={[
             { key: 'id_usuario', label: '#', className: 'w-12 text-left align-middle' },
-            { key: 'nombre', label: 'Nombre', className: 'w-1/3 text-left align-middle' },
-            { key: 'email', label: 'Email', className: 'w-1/3 text-left align-middle' },
+            { key: 'nombre', label: 'Nombre', className: 'w-1/4 text-left align-middle' },
+            { key: 'email', label: 'Email', className: 'w-1/4 text-left align-middle' },
             { key: 'rol', label: 'Rol', className: 'w-24 text-left align-middle' }
           ]}
           data={empleadosFiltrados}
