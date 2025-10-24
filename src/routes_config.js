@@ -58,6 +58,6 @@ export const appRoutes = [
   {
     path: '/facturas/ver',
     label: 'Facturas',
-    roles: ['admin', 'vendedor', 'cajero'],
+    roles: ['admin','cajero'],
   },
 ]

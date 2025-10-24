@@ -37,6 +37,7 @@ const Sidebar = () => {
               <NavLink
                 key={r.path}
                 to={r.path}
+                end
                 onClick={closeSidebar}
                 className={({ isActive }) =>
                   `

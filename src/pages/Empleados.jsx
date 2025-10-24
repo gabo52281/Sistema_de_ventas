@@ -123,6 +123,7 @@ const Empleados = () => {
             { key: 'rol', label: 'Rol', className: 'w-24 text-left align-middle' }
           ]}
           data={empleadosFiltrados}
+          onRefresh={fetchEmpleados}
           rowKey="id_usuario"
           actions={(u) => (
             <>

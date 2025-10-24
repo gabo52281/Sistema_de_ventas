@@ -46,7 +46,7 @@ export default function App() {
           <Route path="/productos" element={<PrivateRoute roles={["admin"]}><Productos /></PrivateRoute>} />
           <Route path="/clientes" element={<PrivateRoute roles={["admin","cajero"]}><Clientes /></PrivateRoute>} />
           <Route path="/facturas" element={<PrivateRoute roles={["cajero","vendedor"]}><Facturas /></PrivateRoute>} />
-          <Route path="/facturas/ver" element={<PrivateRoute roles={["admin","vendedor","cajero"]}><FacturasList /></PrivateRoute>} />
+          <Route path="/facturas/ver" element={<PrivateRoute roles={["admin","cajero"]}><FacturasList /></PrivateRoute>} />
          <Route path="/admin" element={<PrivateRoute roles={["superadmin",]}><AdminPanel /></PrivateRoute>} />
          <Route path="/perfil" element={<PrivateRoute roles={["admin","superadmin","cajero","vendedor"]}><PerfilUsuario /></PrivateRoute>} />
 

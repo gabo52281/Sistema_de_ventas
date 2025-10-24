@@ -1,9 +1,21 @@
 import React from 'react'
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, RotateCcw } from 'lucide-react'
 
-const DataTable = ({ columns = [], data = [], rowKey = 'id', actions = null }) => {
+const DataTable = ({ columns = [], data = [], rowKey = 'id', actions = null, onRefresh}) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+ {/* 🔄 Botón en la parte superior derecha de la tabla */}
+      {onRefresh && (
+        <div className="flex justify-end mb-2 mt-2 mr-2">
+          <button
+            onClick={onRefresh}
+            className="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full hover:bg-blue-200 flex items-center gap-1 cursor-pointer"
+          >
+            <RotateCcw size={20} />
+          </button>
+        </div>
+      )}
+
       {/* ✅ Vista Desktop con columnas alineadas */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full table-fixed text-sm">

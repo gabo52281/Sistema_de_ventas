@@ -92,6 +92,7 @@ const Clientes = () => {
             { key: 'direccion', label: 'Dirección',className: 'w-1/6 text-left align-middle' }
           ]}
           data={clientesFiltrados}
+          onRefresh={fetchClientes}
           rowKey="id_cliente"
           actions={(c) => (
             <div className="flex gap-2">

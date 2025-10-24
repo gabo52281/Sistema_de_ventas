@@ -4,6 +4,7 @@ import MainLayout from '../layouts/MainLayout';
 import api from '../api/axios';
 import { ToastContext } from '../context/ToastContext';
 
+
 // ✅ Función para formatear moneda COP
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('es-CO', {
@@ -24,6 +25,8 @@ const Facturas = () => {
   const [pagoCliente, setPagoCliente] = useState('');
   const [vuelto, setVuelto] = useState(0);
   const { addToast } = useContext(ToastContext);
+  const [resumenFactura, setResumenFactura] = useState(null); // ✅ Nuevo estado
+
 
   // ✅ Cargar productos y clientes
   useEffect(() => {
@@ -61,18 +64,32 @@ const Facturas = () => {
     setItems(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const crearFactura = async (e) => {
-    e.preventDefault();
-    const payload = {
-      productos: items.map(i => ({ id_producto: Number(i.id_producto), cantidad: Number(i.cantidad) })),
-      id_cliente: clienteSeleccionado || null,
-    };
-    const res = await api.post('/facturas/crear', payload);
-    setFacturaCreada(res.data);
-    setItems([]);
-    setClienteSeleccionado('');
-    setPagoCliente('');
+  
+ const crearFactura = async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    productos: items.map(i => ({ id_producto: Number(i.id_producto), cantidad: Number(i.cantidad) })),
+    id_cliente: clienteSeleccionado || null,
   };
+
+  const res = await api.post('/facturas/crear', payload);
+
+  // ✅ Guardar los datos ANTES de limpiar
+  setResumenFactura({
+    total: totalActual,
+    pago: Number(pagoCliente),
+    vuelto: Number(vuelto),
+  });
+
+  setFacturaCreada(res.data);
+
+  // ✅ Ahora sí limpiar después de guardar
+  setItems([]);
+  setClienteSeleccionado('');
+  setPagoCliente('');
+};
+
 
   const buscarClientePorCedula = () => {
     const ced = cedulaBusqueda.trim();
@@ -246,20 +263,88 @@ const assignIdByName = (idx) => {
         </form>
 
         {/* Modal simple para factura creada */}
-        {facturaCreada && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-xl shadow max-w-md w-full">
-              <h2 className="text-xl font-semibold mb-3">Factura #{facturaCreada.id_factura}</h2>
-              <p>Total: {formatCurrency(facturaCreada.total)}</p>
-              <p>Cliente: {facturaCreada.cliente || 'N/A'}</p>
-              <p>Fecha: {new Date(facturaCreada.fecha).toLocaleString()}</p>
-              <p>Vuelto: {formatCurrency(vuelto)}</p>
-              <div className="mt-4 flex justify-end">
-                <button onClick={() => setFacturaCreada(null)} className="bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer">Cerrar</button>
-              </div>
+  {facturaCreada && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+      {/* Header con gradiente */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Factura Creada</h2>
+            <p className="text-blue-100 text-sm mt-1">#{facturaCreada.id_factura}</p>
+          </div>
+          <div className="bg-white bg-opacity-20 rounded-full p-3">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Contenido */}
+      <div className="p-6 space-y-4">
+        {/* Cliente y Fecha */}
+        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="text-sm text-gray-600">Cliente:</span>
+            <span className="font-semibold text-gray-900">{facturaCreada.cliente || 'General'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-sm text-gray-600">Fecha:</span>
+            <span className="text-sm text-gray-900">{new Date(facturaCreada.fecha).toLocaleString('es-CO')}</span>
+          </div>
+        </div>
+
+        {/* Resumen de pago */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center pb-2 border-b">
+            <span className="text-gray-600">Total a pagar</span>
+            <span className="text-xl font-bold text-gray-900">
+              {formatCurrency(resumenFactura?.total || facturaCreada.total)}
+            </span>
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Pago recibido</span>
+            <span className="text-lg font-semibold text-green-600">
+              {formatCurrency(resumenFactura?.pago || 0)}
+            </span>
+          </div>
+
+          {/* Vuelto destacado */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-200">
+            <div className="flex justify-between items-center">
+              <span className="text-green-800 font-medium">Vuelto a devolver</span>
+              <span className="text-2xl font-bold text-green-700">
+                {formatCurrency(resumenFactura?.vuelto || 0)}
+              </span>
             </div>
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* Footer con botón */}
+      <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+        <button
+          onClick={() => {
+            setFacturaCreada(null);
+            setResumenFactura(null);
+          }}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors cursor-pointer shadow-sm"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
     </MainLayout>
   );

@@ -7,7 +7,7 @@ import DataTable from '../components/DataTable';
 
 const Productos = () => {
   const [productos, setProductos] = useState([]);
-  const [nuevo, setNuevo] = useState({ nombre: '', precio: '', precio_compra: '', stock: 0 });
+  const [nuevo, setNuevo] = useState({ nombre: '', precio: '', precio_compra: '', stock: '' });
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const { user } = useContext(AuthContext);
@@ -172,9 +172,10 @@ const guardarEdicion = async () => {
           columns={[
             { key: 'id_producto', label: '#', className: 'w-1/20 text-left' },
             { key: 'nombre', label: 'Nombre', className: 'w-1/5 text-left ' },
-            { key: 'precio', label: 'Precio', className: 'w-1/5 text-left', render: (r) => formatCOP(r.precio) },
+            { key: 'precio', label: 'Precio de venta', className: 'w-1/5 text-left', render: (r) => formatCOP(r.precio) },
             { key: 'stock', label: 'Stock', className: 'w-1/5 text-left' }
           ]}
+
           data={productosFiltrados}
           rowKey="id_producto"
           actions={(p) => (
@@ -207,6 +208,8 @@ const guardarEdicion = async () => {
               </button>
             </>
           )}
+          onRefresh={fetchProductos}   // ✅ ← este es el botón que refresca los datos
+
         />
       </div>
 

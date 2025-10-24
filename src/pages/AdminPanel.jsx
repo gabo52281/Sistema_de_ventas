@@ -88,6 +88,7 @@ const AdminPanel = () => {
             { key: 'admin_email', label: 'Email administrador', className: 'w-48 text-left align-middle' }
           ]}
           data={adminsFiltrados}
+          onRefresh={fetchAdmins}
           rowKey="id_admin"
         />
       </div>
