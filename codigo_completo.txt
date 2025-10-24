@@ -15,6 +15,8 @@ import FacturasList from './pages/FacturasList'
 import Home from './pages/Home'
 import Empleados from './pages/Empleados'
 import Reportes from './pages/Reportes'
+import PerfilUsuario from './pages/PerfilUsuario'
+
 
 const PrivateRoute = ({ children, roles = [] }) => {
   const { user } = React.useContext(AuthContext)
@@ -42,13 +44,13 @@ export default function App() {
           <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
           <Route path="/dashboard" element={<PrivateRoute roles={["admin", "superadmin", "cajero", "vendedor"]}><Dashboard /></PrivateRoute>} />
           <Route path="/reportes" element={ <PrivateRoute roles={["admin"]}><Reportes /></PrivateRoute>} />
-
           <Route path="/empleados" element={<PrivateRoute roles={["admin"]}><Empleados /></PrivateRoute>} />
           <Route path="/productos" element={<PrivateRoute roles={["admin"]}><Productos /></PrivateRoute>} />
           <Route path="/clientes" element={<PrivateRoute roles={["admin","cajero"]}><Clientes /></PrivateRoute>} />
           <Route path="/facturas" element={<PrivateRoute roles={["cajero","vendedor"]}><Facturas /></PrivateRoute>} />
           <Route path="/facturas/ver" element={<PrivateRoute roles={["admin","vendedor","cajero"]}><FacturasList /></PrivateRoute>} />
          <Route path="/admin" element={<PrivateRoute roles={["superadmin",]}><AdminPanel /></PrivateRoute>} />
+         <Route path="/perfil" element={<PrivateRoute roles={["admin","superadmin","cajero","vendedor"]}><PerfilUsuario /></PrivateRoute>} />
 
         </Routes>
       </BrowserRouter>
@@ -71,45 +73,92 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
 ----- .\src\components\DataTable.jsx -----
 import React from 'react'
-
-// DataTable minimal y reutilizable
-// Props:
-// - columns: [{ key, label, className, render? }]
-// - data: array
-// - rowKey: string
-// - actions: (row) => JSX
+import { MoreVertical } from 'lucide-react'
 
 const DataTable = ({ columns = [], data = [], rowKey = 'id', actions = null }) => {
   return (
-    <div className="bg-white rounded shadow overflow-auto">
-      <table className="min-w-full w-full table-fixed text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            {columns.map(col => (
-              <th key={col.key} className={`p-2 ${col.className || 'text-left align-middle'}`}>{col.label}</th>
-            ))}
-            {actions && <th className="p-2 w-48 text-left align-middle">Acciones</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map(row => (
-            <tr key={row[rowKey]} className="border-t hover:bg-gray-50">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      {/* ✅ Vista Desktop con columnas alineadas */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full table-fixed text-sm">
+          <thead>
+            <tr className="border-b border-gray-200 bg-gray-50">
               {columns.map(col => (
-                <td key={col.key} className={`p-2 ${col.cellClass || ''}`}>
-                  {col.render ? col.render(row) : row[col.key]}
-                </td>
+                <th
+                  key={col.key}
+                  className={`px-4 py-3 text-left font-bold text-black-700 truncate ${col.className || ''}`}
+                >
+                  {col.label}
+                </th>
               ))}
               {actions && (
-                <td className="p-2">
-                  <div className="flex items-center space-x-3">
-                    {actions(row)}
-                  </div>
-                </td>
+                <th className="px-4 py-3 text-center font-bold text-black-700 w-32">
+                  Acciones
+                </th>
               )}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody className="divide-y divide-gray-200">
+            {data.map(row => (
+              <tr key={row[rowKey]} className="hover:bg-gray-50 transition-colors">
+                {columns.map(col => (
+                  <td
+                    key={col.key}
+                    className={`px-4 py-3 text-gray-900 truncate ${col.cellClass || ''}`}
+                    
+                  >
+                    {col.render ? col.render(row) : row[col.key]}
+                  </td>
+                ))}
+                {actions && (
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      {actions(row)}
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ✅ Vista móvil limpia en cards */}
+      <div className="md:hidden">
+        {data.map((row, idx) => (
+          <div key={row[rowKey]} className={`p-5 ${idx !== data.length - 1 ? 'border-b border-gray-200' : ''}`}>
+            <div className="space-y-3">
+              {columns.map(col => (
+                <div key={col.key} className="flex justify-between items-start gap-4">
+                  <span className="text-xs font-medium text-black-500 uppercase tracking-wide min-w-20">
+                    {col.label}
+                  </span>
+                  <span className={`text-sm text-gray-900 text-right flex-1 ${col.cellClass || ''}`}>
+                    {col.render ? col.render(row) : row[col.key]}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {actions && (
+              <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                {actions(row)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Estado vacío */}
+      {data.length === 0 && (
+        <div className="py-16 text-center">
+          <div className="text-gray-400 mb-2">
+            <MoreVertical className="w-12 h-12 mx-auto opacity-50" />
+          </div>
+          <p className="text-gray-500 text-sm">No hay datos para mostrar</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -207,6 +256,94 @@ const Navbar = () => {
 
 export default Navbar
 
+----- .\src\components\NotasLogin.jsx -----
+import React, { useEffect, useState } from "react";
+import api from "../api/axios";
+import { FaStickyNote, FaMinus, FaExpand } from "react-icons/fa";
+
+const NotasLogin = () => {
+  const [contenido, setContenido] = useState("");
+  const [minimizado, setMinimizado] = useState(false);
+
+  // ✅ Minimizar automáticamente si la pantalla es pequeña
+  useEffect(() => {
+    const manejarPantalla = () => {
+      setMinimizado(window.innerWidth < 768);
+    };
+    manejarPantalla();
+    window.addEventListener("resize", manejarPantalla);
+    return () => window.removeEventListener("resize", manejarPantalla);
+  }, []);
+
+  // ✅ Cargar nota al inicio
+  useEffect(() => {
+    const obtenerNotas = async () => {
+      try {
+        const { data } = await api.get("/notas");
+        if (data && data.contenido !== undefined) {
+          setContenido(data.contenido); // ← aquí ya coincide con tu backend
+        }
+      } catch (error) {
+        console.error("❌ Error al cargar notas:", error);
+      }
+    };
+
+    obtenerNotas();
+  }, []);
+
+  // ✅ Auto-guardado usando POST (correcto con tu backend)
+  useEffect(() => {
+    const guardar = setTimeout(async () => {
+      try {
+        await api.post("/notas", { contenido });
+        // console.log("✅ Nota guardada automáticamente");
+      } catch (error) {
+        console.error("❌ Error al guardar nota:", error);
+      }
+    }, 600); // espera 600ms para evitar guardar en cada tecla
+
+    return () => clearTimeout(guardar);
+  }, [contenido]);
+
+  return (
+    <div
+      className={`${
+        minimizado
+          ? "fixed top-3 right-3 z-50 w-52"
+          : "fixed top-5 right-5 z-50 w-[350px]"
+      }`}
+    >
+      {/* ✅ Encabezado de la nota */}
+      <div className="bg-white shadow-md rounded-lg border p-3 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <FaStickyNote className="text-yellow-500" />
+          <span className="font-bold text-gray-700">Contraseñas aquí</span>
+        </div>
+        <button
+          onClick={() => setMinimizado(!minimizado)}
+          className="bg-gray-100 hover:bg-gray-200 transition p-1 rounded-md cursor-pointer"
+        >
+          {minimizado ? <FaExpand /> : <FaMinus />}
+        </button>
+      </div>
+
+      {/* ✅ Área de texto */}
+      {!minimizado && (
+        <div className="bg-white shadow-md rounded-lg border mt-2 p-3">
+          <textarea
+            value={contenido}
+            onChange={(e) => setContenido(e.target.value)}
+            className="w-full h-64 resize-none p-2 border rounded focus:outline-none"
+            placeholder="Escribe tus notas aquí..."
+          ></textarea>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default NotasLogin;
+
 ----- .\src\components\SearchBar.jsx -----
 import React from 'react'
 
@@ -223,61 +360,64 @@ const SearchBar = ({ value, onChange, placeholder = "Buscar..." }) => (
 export default SearchBar
 
 ----- .\src\components\Sidebar.jsx -----
-import React, { useContext } from 'react'
-import { NavLink } from 'react-router-dom'
-import { AuthContext } from '../context/AuthContext'
-import { UIContext } from '../context/UIContext'
-import { appRoutes } from '../routes_config'
+import React, { useContext } from 'react';
+import { NavLink } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import { UIContext } from '../context/UIContext';
+import { appRoutes } from '../routes_config';
 
 const Sidebar = () => {
-  const { user } = useContext(AuthContext)
-  const { sidebarOpen, closeSidebar } = useContext(UIContext)
-  if (!user) return null
+  const { user } = useContext(AuthContext);
+  const { sidebarOpen, closeSidebar } = useContext(UIContext);
 
-  const { rol } = user
-
-
+  if (!user) return null;
+  const { rol } = user;
 
   return (
     <>
-      {/* Fondo semitransparente (solo móvil) */}
+      {/* Fondo sombra (móvil) */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
+          className="fixed inset-0 bg-gray-200 bg-opacity-30 z-40 md:hidden"
           onClick={closeSidebar}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white border-r z-50 transform transition-transform duration-300 
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-md rounded-br-2xl border-r border-b z-50
+        transform transition-transform duration-300
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0 md:static md:block`}
       >
-        <nav className="p-4 space-y-2">
+     
+        {/* Navegación */}
+        <nav className="p-4 space-y-1">
           {appRoutes
-            .filter((r) => r.roles.includes(rol)) // ← solo las permitidas
+            .filter((r) => r.roles.includes(rol))
             .map((r) => (
               <NavLink
                 key={r.path}
                 to={r.path}
                 onClick={closeSidebar}
                 className={({ isActive }) =>
-                  isActive
-                    ? 'block p-2 rounded bg-blue-50 text-blue-700 font-semibold'
-                    : 'block p-2 rounded hover:bg-gray-50'
+                  `
+                    flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition
+                    ${isActive ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-500 font-semibold' : ''}
+                  `
                 }
               >
+                {/* Si luego quieres íconos: <IconComponent /> */}
                 {r.label}
               </NavLink>
             ))}
         </nav>
       </aside>
     </>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;
 
 ----- .\src\components\ToastContainer.jsx -----
 import React, { useContext } from 'react'
@@ -331,12 +471,15 @@ export const AuthProvider = ({ children }) => {
       const res = await api.post('/auth/login', { email, password })
       // backend expected: { token, rol, id_usuario, id_admin }
       const payload = {
-        token: res.data.token,
+       token: res.data.token,
         rol: res.data.rol,
         id_usuario: res.data.id_usuario || null,
         id_admin: res.data.id_admin || null,
         nombre: res.data.nombre || null,
-        nombre_negocio: res.data.nombre_negocio || null
+        nombre_negocio: res.data.nombre_negocio || null,
+        email: res.data.correo || null,
+        telefono: res.data.telefono || null,     // ✅ nuevo
+        direccion: res.data.direccion || null    // ✅ nuevo
       }
       setUser(payload)
       return payload
@@ -348,7 +491,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => setUser(null)
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, setUser,login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )
@@ -408,7 +551,7 @@ const MainLayout = ({ children }) => {
       <Navbar />
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <main className="flex-1 p-4 overflow-auto">{children}</main>
       </div>
       <footer className="text-center text-sm text-gray-500 py-4">
         © {new Date().getFullYear()} Sistema de Ventas
@@ -432,7 +575,9 @@ const AdminPanel = () => {
     email_contacto: '',
     nombre_admin: '',
     email_admin: '',
-    password_admin: ''
+    password_admin: '',
+    direccion_admin: '',
+    telefono_admin: ''
   })
   const [search, setSearch] = useState('')
 
@@ -454,7 +599,9 @@ const AdminPanel = () => {
       email_contacto: '',
       nombre_admin: '',
       email_admin: '',
-      password_admin: ''
+      password_admin: '',
+      direccion_admin: '',
+      telefono_admin: ''
     })
     fetchAdmins()
   }
@@ -485,7 +632,13 @@ const AdminPanel = () => {
           <input className="border p-2 rounded" type="password" placeholder="Contraseña del administrador"
             value={nuevo.password_admin}
             onChange={e => setNuevo({ ...nuevo, password_admin: e.target.value })} />
-          <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full">Crear negocio y admin</button>
+          <input className="border p-2 rounded" placeholder="Dirección del administrador"
+            value={nuevo.direccion_admin}
+            onChange={e => setNuevo({ ...nuevo, direccion_admin: e.target.value })} />
+          <input className="border p-2 rounded" placeholder="Teléfono del administrador"
+            value={nuevo.telefono_admin}
+            onChange={e => setNuevo({ ...nuevo, telefono_admin: e.target.value })} />
+          <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full cursor-pointer">Crear negocio y admin</button>
         </form>
 
         <SearchBar value={search} onChange={setSearch} placeholder="Buscar negocio o admin..." />
@@ -514,22 +667,31 @@ import api from '../api/axios'
 import SearchBar from '../components/SearchBar'
 import DataTable from '../components/DataTable'
 
-
 const Clientes = () => {
   const [clientes, setClientes] = useState([])
-  const [nuevo, setNuevo] = useState({ nombre:'', telefono:'', direccion:'' , cedula: ''})
+  const [nuevo, setNuevo] = useState({ nombre:'', telefono:'', direccion:'', cedula: ''})
+  const [search, setSearch] = useState('')
 
-  const fetchClientes = async () => { try { const res = await api.get('/clientes'); setClientes(res.data) } catch (e) { console.error(e) } }
+  // Estados para edición
+  const [editando, setEditando] = useState(null)
+  const [formEditar, setFormEditar] = useState({ nombre:'', telefono:'', direccion:'', cedula:'' })
+
+  const fetchClientes = async () => { 
+    try { 
+      const res = await api.get('/clientes'); 
+      setClientes(res.data) 
+    } catch (e) { console.error(e) } 
+  }
+
   useEffect(()=>{ fetchClientes() }, [])
 
   const crear = async (e) => { 
     e.preventDefault(); 
     try {
       await api.post('/clientes/crear', nuevo)
-      setNuevo({ nombre:'', telefono:'', direccion:'',cedula: ''})
+      setNuevo({ nombre:'', telefono:'', direccion:'', cedula:'' })
       fetchClientes()
     } catch (err) {
-      console.error('Error crear cliente', err)
       alert(err.response?.data?.error || 'Error al crear cliente')
     }
   }
@@ -540,53 +702,103 @@ const Clientes = () => {
       await api.delete(`/clientes/${id}`)
       fetchClientes()
     } catch (err) {
-      console.error('Error eliminar cliente', err)
       alert(err.response?.data?.error || 'Error al eliminar cliente')
     }
   }
-  
-  const [search, setSearch] = useState('')
+
+  const abrirEditar = (c) => {
+    setEditando(c.id_cliente)
+    setFormEditar({
+      nombre: c.nombre,
+      telefono: c.telefono || '',
+      direccion: c.direccion || '',
+      cedula: c.cedula || ''
+    })
+  }
+
+  const guardarEdicion = async (e) => {
+    e.preventDefault()
+    try {
+      await api.put(`/clientes/${editando}`, formEditar)
+      setEditando(null)
+      fetchClientes()
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al editar cliente')
+    }
+  }
+
   const clientesFiltrados = clientes.filter(c =>
-  c.nombre.toLowerCase().includes(search.toLowerCase()) ||
-  c.telefono?.toLowerCase().includes(search.toLowerCase())
-)
+    c.nombre.toLowerCase().includes(search.toLowerCase()) ||
+    c.telefono?.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <MainLayout>
       <div>
         <h1 className="text-2xl font-bold mb-4">Registra tus clientes</h1>
-        
         <form onSubmit={crear} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-3">
           <input className="border p-2 rounded" placeholder="Nombre" value={nuevo.nombre} onChange={e=>setNuevo({...nuevo,nombre:e.target.value})} />
           <input className="border p-2 rounded" placeholder="Teléfono" value={nuevo.telefono} onChange={e=>setNuevo({...nuevo,telefono:e.target.value})} />
           <input className="border p-2 rounded" placeholder="Dirección" value={nuevo.direccion} onChange={e=>setNuevo({...nuevo,direccion:e.target.value})} />
           <input className="border p-2 rounded" placeholder="Cédula" value={nuevo.cedula} onChange={e=>setNuevo({...nuevo,cedula:e.target.value})} />
-          <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-full">Crear cliente</button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-full cursor-pointer">Crear cliente</button>
         </form>
 
         <h1 className="text-2xl font-bold mb-4">Mis clientes</h1>
         <SearchBar value={search} onChange={setSearch} placeholder="Buscar cliente..." />
         <DataTable
           columns={[
-            { key: 'id_cliente', label: '#', className: 'w-12 text-left align-middle' },
-            { key: 'nombre', label: 'Nombre', className: 'w-1/3 text-left align-middle' },
-            { key: 'cedula', label: 'Cédula', className: 'w-1/4 text-left align-middle' },
-            { key: 'telefono', label: 'Teléfono', className: 'w-1/4 text-left align-middle' },
-            { key: 'direccion', label: 'Dirección', className: 'w-1/3 text-left align-middle' }
+            { key: 'id_cliente', label: '#', className: 'w-1/20 text-left' },
+            { key: 'nombre', label: 'Nombre', className: 'w-1/6 text-left align-middle ' },
+            { key: 'cedula', label: 'Cédula', className: 'w-1/6 text-left align-middle'},
+            { key: 'telefono', label: 'Teléfono',className: 'w-1/6 text-left align-middle' },
+            { key: 'direccion', label: 'Dirección',className: 'w-1/6 text-left align-middle' }
           ]}
           data={clientesFiltrados}
           rowKey="id_cliente"
           actions={(c) => (
-            <>
-              <button onClick={() => eliminar(c.id_cliente)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
-            </>
+            <div className="flex gap-2">
+              <button
+                onClick={() => abrirEditar(c)}
+                className="bg-yellow-100 text-yellow-700 px-3 py-1 text-sm rounded-full hover:bg-yellow-200 cursor-pointer"
+              >
+                Editar
+              </button>
+              <button
+                onClick={() => eliminar(c.id_cliente)}
+                className="bg-red-100 text-red-700 px-3 py-1 text-sm rounded-full hover:bg-red-200 cursor-pointer"
+              >
+                Eliminar
+              </button>
+            </div>
           )}
         />
+
+        {editando && (
+          <div className="fixed inset-0 bg-gray-100 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
+              <h2 className="text-lg font-bold mb-4">Editar Cliente</h2>
+              <form onSubmit={guardarEdicion} className="space-y-3">
+                <input className="border p-2 rounded w-full" value={formEditar.nombre} onChange={e=>setFormEditar({...formEditar,nombre:e.target.value})} placeholder="Nombre" />
+                <input className="border p-2 rounded w-full" value={formEditar.telefono} onChange={e=>setFormEditar({...formEditar,telefono:e.target.value})} placeholder="Teléfono" />
+                <input className="border p-2 rounded w-full" value={formEditar.direccion} onChange={e=>setFormEditar({...formEditar,direccion:e.target.value})} placeholder="Dirección" />
+                <input className="border p-2 rounded w-full" value={formEditar.cedula} onChange={e=>setFormEditar({...formEditar,cedula:e.target.value})} placeholder="Cédula" />
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <button type="button" onClick={()=>setEditando(null)} className="px-4 py-2 bg-gray-200 rounded cursor-pointer">Cancelar</button>
+                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer">Guardar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </MainLayout>
   )
 }
+
 export default Clientes
+
 ----- .\src\pages\Dashboard.jsx -----
 import React, { useContext } from 'react'
 import MainLayout from '../layouts/MainLayout'
@@ -726,9 +938,8 @@ const Empleados = () => {
             onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value })}
           >
             <option value="cajero">Cajero</option>
-            <option value="vendedor">Vendedor</option>
           </select>
-          <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full">
+          <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full cursor-pointer">
             Crear empleado
           </button>
         </form>
@@ -738,16 +949,16 @@ const Empleados = () => {
         <DataTable
           columns={[
             { key: 'id_usuario', label: '#', className: 'w-12 text-left align-middle' },
-            { key: 'nombre', label: 'Nombre', className: 'w-1/3 text-left align-middle' },
-            { key: 'email', label: 'Email', className: 'w-1/3 text-left align-middle' },
+            { key: 'nombre', label: 'Nombre', className: 'w-1/4 text-left align-middle' },
+            { key: 'email', label: 'Email', className: 'w-1/4 text-left align-middle' },
             { key: 'rol', label: 'Rol', className: 'w-24 text-left align-middle' }
           ]}
           data={empleadosFiltrados}
           rowKey="id_usuario"
           actions={(u) => (
             <>
-              <button onClick={() => editarEmpleado(u)} className="inline-block bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-yellow-200 transition">Editar</button>
-              <button onClick={() => eliminarEmpleado(u.id_usuario)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+              <button onClick={() => editarEmpleado(u)} className="inline-block bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-yellow-200 transition cursor-pointer">Editar</button>
+              <button onClick={() => eliminarEmpleado(u.id_usuario)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition cursor-pointer">Eliminar</button>
             </>
           )}
         />
@@ -805,7 +1016,7 @@ const Facturas = () => {
   }, [pagoCliente, totalActual]);
 
   const addItem = () =>
-    setItems([...items, { id_producto: productos[0]?.id_producto || '', cantidad: 1, query: productos[0]?.nombre || '' }]);
+  setItems([...items, { id_producto: '', cantidad: 1, query: '' }]);
 
   const updateItem = (idx, field, value) => {
     const newItems = [...items];
@@ -848,34 +1059,57 @@ const Facturas = () => {
   };
 
   const clienteObj = clientes.find(c => String(c.id_cliente) === String(clienteSeleccionado));
+const clearItems = () => {
+  setItems([]);
+};
+
+const assignIdByName = (idx) => {
+  const text = items[idx].query?.trim().toLowerCase();
+  if (!text) return;
+  const matched = productos.find(p => p.nombre.toLowerCase() === text);
+  if (matched) {
+    updateItem(idx, 'id_producto', matched.id_producto);
+  }
+};
+
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Crear Factura</h1>
+      <div className="max-w-6xl mx-auto p-2">
+        <h1 className="text-2xl font-bold mb-2">Crear Factura</h1>
 
         <form onSubmit={crearFactura}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Left: productos (col-span 8) */}
-            <div className="md:col-span-8 bg-white p-6 rounded-xl shadow">
+            
+           {/* Left: productos (col-span 8) */}
+<div className="md:col-span-8 bg-white p-6 rounded-xl shadow max-h-[80vh] overflow-auto">
               <h2 className="text-xl font-semibold mb-4">Productos</h2>
-              <div className="max-h-72 overflow-auto">
+              <div className="space-y-2">
                 {items.map((it, idx) => {
                   const q = String(it.query || '');
                   const filtered = productos.filter(p => p.nombre.toLowerCase().includes(q.toLowerCase()));
                   return (
-                    <div key={idx} className="relative flex gap-4 mb-2 items-center">
-                      <div className="flex-1">
-                        <input
-                          className="w-full border border-gray-300 p-2 rounded-lg"
-                          value={it.query || ''}
-                          onChange={e => updateItem(idx, 'query', e.target.value)}
-                          onFocus={() => setSuggestionsIndex(idx)}
-                          onBlur={() => setTimeout(() => setSuggestionsIndex(-1), 150)}
-                          placeholder="Escribe para buscar producto..."
-                        />
+                    <div key={idx} className="flex gap-4 items-center">
+                      <div className="flex-1 relative">
+                   <input
+  className={`w-full border p-2 rounded-lg
+    ${it.id_producto ? 'border-green-400' : 'border-red-600'}`}
+  value={it.query || ''}
+  onChange={e => {
+    const value = e.target.value;
+    updateItem(idx, 'query', value);
+    updateItem(idx, 'id_producto', ''); // resetear id mientras escribe
+  }}
+  onFocus={() => setSuggestionsIndex(idx)}
+  onBlur={() => {
+    setTimeout(() => setSuggestionsIndex(-1), 150);
+    assignIdByName(idx); // asignar id si el nombre coincide
+  }}
+  placeholder="Escribe para buscar producto..."
+/>
+
                         {suggestionsIndex === idx && filtered.length > 0 && (
-                          <ul className="absolute z-20 bg-white border rounded mt-1 max-h-40 overflow-auto w-full shadow">
+                          <ul className="absolute z-50 bg-white border rounded mt-1 max-h-60 overflow-auto w-full shadow-lg left-0 right-0">
                             {filtered.map(p => (
                               <li key={p.id_producto} className="p-2 hover:bg-gray-100 cursor-pointer"
                                 onMouseDown={() => {
@@ -897,10 +1131,19 @@ const Facturas = () => {
                   );
                 })}
               </div>
-              <div className="mt-3">
-                <button type="button" onClick={addItem} className="bg-green-600 text-white px-4 py-2 rounded-lg">Añadir producto</button>
+                <div className="mt-3  flex gap-2">
+                  <button type="button" onClick={addItem} className="bg-green-600 text-white px-4 py-2 rounded-lg cursor-pointer">Añadir producto</button>
+                   {items.length > 0 && (
+    <button
+      type="button"
+      onClick={clearItems}
+      className="bg-red-600 text-white px-4 py-2 rounded-lg cursor-pointer"
+    >
+      Limpiar todo
+    </button>
+  )}
+                </div>
               </div>
-            </div>
 
             {/* Right: cliente + total (col-span 4) */}
             <div className="md:col-span-4 space-y-4">
@@ -915,14 +1158,14 @@ const Facturas = () => {
                 <label className="block text-sm text-black-400 mb-1">Buscar por cédula:</label>
                 <div className="flex gap-2 mb-3">
                   <input className="flex-1 min-w-0 border-gray-300 p-2 rounded-lg" value={cedulaBusqueda} onChange={e => setCedulaBusqueda(e.target.value)} placeholder="Cédula" />
-                  <button type="button" onClick={buscarClientePorCedula} className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg">Buscar</button>
+                  <button type="button" onClick={buscarClientePorCedula} className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg cursor-pointer">Buscar</button>
                 </div>
 
                 {clienteObj && (
                   <div className="mt-2 p-3 bg-gray-50 border rounded-lg">
                     <p className="font-medium">{clienteObj.nombre}</p>
                     <p className="text-sm text-black-400">Cédula: {clienteObj.cedula}</p>
-                    <button type="button" onClick={() => setClienteSeleccionado('')} className="text-sm text-red-600 mt-2">Quitar</button>
+                    <button type="button" onClick={() => setClienteSeleccionado('')} className="text-sm text-red-600 mt-2 cursor-pointer">Quitar</button>
                   </div>
                 )}
               </div>
@@ -930,6 +1173,25 @@ const Facturas = () => {
               <div className="bg-white p-6 rounded-xl shadow">
                 <p className="text-lg font-semibold mb-2">Total</p>
                 <p className="text-2xl font-bold mb-4">{formatCurrency(totalActual)}</p>
+                {/* ✅ Detalle de productos agregados */}
+                  {items.length > 0 && (
+                    <div className="mb-4 border-t pt-3">
+                      <p className="text-sm font-semibold mb-2">Detalle:</p>
+                      <ul className="space-y-1 max-h-32 overflow-auto text-sm">
+                        {items.map((it, idx) => {
+                          const p = productos.find(prod => prod.id_producto == it.id_producto);
+                          if (!p) return null;
+                          return (
+                            <li key={idx} className="flex justify-between">
+                              <span>{it.cantidad} × {p.nombre}</span>
+                              <span>{formatCurrency(p.precio * it.cantidad)}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+
                 <label className="block text-sm text-black-400 mb-1 ">Monto pagado</label>
                 <input type="text" className="w-full p-2 rounded-lg mb-3 border border-black"
                   placeholder="Ej: 50.000"
@@ -939,7 +1201,17 @@ const Facturas = () => {
               </div>
 
               <div className="sticky bottom-6">
-                <button type="submit" disabled={items.length === 0} className={`w-full py-3 rounded-lg text-white font-semibold ${items.length === 0 ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>Crear factura</button>
+                <button
+                  type="submit"
+                  disabled={items.length === 0 || (Number(pagoCliente) || 0) < totalActual}
+                  className={`cursor-pointer w-full py-3 rounded-lg text-white font-semibold ${
+                    items.length === 0 || (Number(pagoCliente) || 0) < totalActual
+                      ? 'bg-gray-400'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  Crear factura
+                </button>
               </div>
             </div>
           </div>
@@ -955,7 +1227,7 @@ const Facturas = () => {
               <p>Fecha: {new Date(facturaCreada.fecha).toLocaleString()}</p>
               <p>Vuelto: {formatCurrency(vuelto)}</p>
               <div className="mt-4 flex justify-end">
-                <button onClick={() => setFacturaCreada(null)} className="bg-blue-600 text-white px-4 py-2 rounded-lg">Cerrar</button>
+                <button onClick={() => setFacturaCreada(null)} className="bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer">Cerrar</button>
               </div>
             </div>
           </div>
@@ -1002,6 +1274,11 @@ const FacturasList = () => {
   f.vendedor.toLowerCase().includes(search.toLowerCase())
 )
 
+const formatCOP = (value) => {
+  if (!value && value !== 0) return '';
+  return `$ ${new Intl.NumberFormat('es-CO').format(value)}`;
+};
+
 
   return (
     <MainLayout>
@@ -1010,16 +1287,16 @@ const FacturasList = () => {
 
       <DataTable
         columns={[
-          { key: 'id_factura', label: '#', className: 'w-12 text-left align-middle' },
-          { key: 'cliente', label: 'Cliente', className: 'w-1/3 text-left align-middle' },
-          { key: 'total', label: 'Total', className: 'w-1/4 text-left align-middle', render: (r) => `$${r.total}` },
+          { key: 'id_factura', label: '#', className: 'w-15 text-left align-middle' },
+          { key: 'cliente', label: 'Cliente', className: 'w-1/4 text-left align-middle' },
+          { key: 'total', label: 'Total', className: 'w-1/4 text-left align-middle', render: (r) => formatCOP(r.total) },
           { key: 'fecha', label: 'Fecha', className: 'w-1/3 text-left align-middle', render: (r) => new Date(r.fecha).toLocaleString() }
         ]}
         data={facturasFiltradas}
         rowKey="id_factura"
         actions={(f) => (
           <>
-            <button onClick={() => eliminarFactura(f.id_factura)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition">Eliminar</button>
+            <button onClick={() => eliminarFactura(f.id_factura)} className="inline-block bg-red-100 text-red-700 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-200 transition cursor-pointer">Eliminar</button>
           </>
         )}
       />
@@ -1034,33 +1311,41 @@ import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex flex-col relative overflow-hidden">
+      
+      {/* Efecto de fondo animado sutil - igual al login */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+      </div>
+
       {/* NAVBAR */}
-      <header className="flex justify-between items-center px-6 py-4 bg-white shadow">
-        <h1 className="text-2xl font-bold text-blue-700">
-          Sistema de Ventas POS e Inventario
+      <header className="flex justify-between items-center px-6 py-4 bg-white/10 backdrop-blur-md shadow-lg border-b border-white/20 relative z-10">
+        <h1 className="text-2xl font-bold text-white drop-shadow-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          Facturer
         </h1>
         <Link
           to="/login"
-          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+          className="bg-white/95 text-blue-700 px-6 py-2.5 rounded-lg hover:bg-white transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
         >
           Ingresar al sistema
         </Link>
       </header>
 
       {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 flex flex-col md:flex-row items-center justify-center gap-30 px-6">
+      <main className="flex-1 flex flex-col md:flex-row items-center justify-center gap-12 px-6 relative z-10">
         <div className="max-w-lg text-center md:text-left">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-6 leading-tight">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight drop-shadow-2xl">
             Control total de tus ventas y tu inventario
           </h2>
-          <p className="text-gray-600 text-lg mb-8">
+          <p className="text-blue-100 text-lg mb-8 leading-relaxed">
             Gestiona tus productos, clientes y facturas desde un solo lugar.
             Nuestro sistema te ofrece rapidez, seguridad y control para tu negocio.
           </p>
           <Link
             to="/login"
-            className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg text-lg hover:bg-blue-700 transition"
+            className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3.5 rounded-lg text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-2xl hover:shadow-blue-500/50 transform hover:-translate-y-1"
           >
             Comenzar ahora
           </Link>
@@ -1070,71 +1355,211 @@ export default function Home() {
           <img
             src="https://cdn-icons-png.flaticon.com/512/950/950258.png"
             alt="Ilustración de ventas e inventario"
-            className="w-3/4 drop-shadow-xl"
+            className="w-3/4 drop-shadow-2xl filter brightness-110"
           />
         </div>
       </main>
 
-      <footer className="text-center py-4 text-gray-500 text-sm">
+      <footer className="text-center py-4 text-blue-200/70 text-sm relative z-10">
         © {new Date().getFullYear()} Sistema de Ventas POS e Inventario
       </footer>
     </div>
   );
 }
-
 ----- .\src\pages\Login.jsx -----
-import React, { useState, useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { AuthContext } from '../context/AuthContext'
+import React, { useState, useContext } from "react";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import NotasLogin from "../components/NotasLogin";
 
 const Login = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const { login } = useContext(AuthContext)
-  const navigate = useNavigate()
-  const [error, setError] = useState(null)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
   const submit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      await login(email, password)
-      navigate('/dashboard')
+      await login(email, password);
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.error || 'Credenciales inválidas')
+      setError(err.response?.data?.error || "Credenciales inválidas");
     }
-  }
+  };
+return (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 relative overflow-hidden">
+    
+    {/* Efecto de fondo animado sutil */}
+    <div className="absolute inset-0 opacity-30">
+      <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+    </div>
+
+    {/* ✅ LOGO SUPERIOR IZQUIERDA */}
+    <Link
+      to="/"
+      className="absolute top-6 left-8 text-2xl font-bold text-white hover:text-blue-300 transition-all duration-300 z-10 drop-shadow-lg"
+      style={{ fontFamily: 'Montserrat, sans-serif' }}
+    >
+      Facturer
+    </Link>
+
+    {/* CONTENEDOR DEL LOGIN */}
+    <form
+      onSubmit={submit}
+      className="bg-white/95 backdrop-blur-sm p-10 rounded-2xl shadow-2xl w-full max-w-sm space-y-6 relative z-10 border border-white/20"
+    >
+      <div className="text-center space-y-2">
+        <h2 className="text-3xl font-bold text-gray-800">Bienvenido</h2>
+        <p className="text-gray-500 text-sm">Ingresa tus credenciales para continuar</p>
+      </div>
+
+      {error && (
+        <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg border border-red-200 animate-shake">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div className="relative">
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            className="w-full border border-gray-300 p-3.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
+          />
+        </div>
+
+        <div className="relative">
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            placeholder="Contraseña"
+            className="w-full border border-gray-300 p-3.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
+          />
+        </div>
+      </div>
+
+      <button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer">
+        Entrar
+      </button>
+
+      <div className="text-center">
+        <a href="#" className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+    </form>
+
+    {/* NOTAS FLOTANTES (se mantienen discretas) */}
+    <NotasLogin />
+  </div>
+);
+};
+
+export default Login;
+
+----- .\src\pages\PerfilUsuario.jsx -----
+import React, { useContext, useState } from "react";
+import MainLayout from "../layouts/MainLayout";
+import { AuthContext } from "../context/AuthContext";
+import api from "../api/axios";
+import { ToastContext } from "../context/ToastContext";
+
+const PerfilUsuario = () => {
+  const { user, setUser } = useContext(AuthContext);
+  const { addToast } = useContext(ToastContext);
+
+  const [form, setForm] = useState({
+    nombre: user?.nombre || "",
+    email: user?.email || "",
+    telefono: user?.telefono || "",
+    direccion: user?.direccion || "",
+  });
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const guardarPerfil = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put("/users/perfil", {
+        nombre: form.nombre,
+        telefono: form.telefono,
+        direccion: form.direccion,
+      });
+
+      // ✅ Actualizar datos en el AuthContext y LocalStorage
+      const updatedUser = { ...user, ...form };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      addToast("Perfil actualizado", "success");
+    } catch (error) {
+      addToast("Error al actualizar perfil", "error");
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form 
-        onSubmit={submit} 
-        className="bg-white p-12 rounded-2xl shadow-lg w-full max-w-sm flex flex-col gap-5 h-[400px]"
-      >
-        <h2 className="text-2xl font-bold text-center">Iniciar sesión</h2>
+    <MainLayout>
+      <div className="max-w-lg mx-auto bg-white p-6 rounded-xl shadow">
+        <h2 className="text-2xl font-bold mb-4">Mi Perfil</h2>
 
-        {error && <div className="text-red-600 text-center">{error}</div>}
+        <form onSubmit={guardarPerfil} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium">Nombre</label>
+            <input
+              name="nombre"
+              value={form.nombre}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+            />
+          </div>
 
-        <input 
-          value={email} 
-          onChange={e=>setEmail(e.target.value)} 
-          placeholder="Email" 
-          className="w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
-        />
-        <input 
-          value={password} 
-          onChange={e=>setPassword(e.target.value)} 
-          type="password" 
-          placeholder="Contraseña" 
-          className="w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
-        />
-        <button className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 transition">
-          Entrar
-        </button>
-      </form>
-    </div>
-  )
-}
-export default Login
+          <div>
+            <label className="block text-sm font-medium">Email (no editable)</label>
+            <input
+              value={form.email}
+              disabled
+              className="border p-2 rounded w-full bg-gray-100"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Teléfono</label>
+            <input
+              name="telefono"
+              value={form.telefono}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Dirección</label>
+            <input
+              name="direccion"
+              value={form.direccion}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+            />
+          </div>
+
+          <button className="bg-blue-600 text-white px-4 py-2 rounded w-full">
+            Guardar cambios
+          </button>
+        </form>
+      </div>
+    </MainLayout>
+  );
+};
+
+export default PerfilUsuario;
 
 ----- .\src\pages\Productos.jsx -----
 import React, { useEffect, useState, useContext } from 'react';
@@ -1171,9 +1596,10 @@ const Productos = () => {
 
   // 👉 Función para formatear número como moneda local COP (ej: 50.000)
   const formatCOP = (value) => {
-    if (!value) return '';
-    return new Intl.NumberFormat('es-CO').format(value);
-  };
+  if (!value && value !== 0) return '';
+  return `$ ${new Intl.NumberFormat('es-CO').format(value)}`;
+};
+
 
   const crear = async (e) => {
     e.preventDefault();
@@ -1202,57 +1628,105 @@ const Productos = () => {
     p.nombre.toLowerCase().includes(search.toLowerCase())
   );
 
+  const [editando, setEditando] = useState(false);
+const [productoEditado, setProductoEditado] = useState({ id: null, nombre: '', precio: '', stock: '' });
+
+const comenzarEdicion = (producto) => {
+  setProductoEditado({
+    id: producto.id_producto,
+    nombre: producto.nombre,
+    precio: producto.precio,
+    stock: producto.stock
+  });
+  setEditando(true);
+};
+
+const guardarEdicion = async () => {
+  try {
+    await api.put(`/productos/${productoEditado.id}`, {
+      nombre: productoEditado.nombre,
+      precio: productoEditado.precio,
+      stock: productoEditado.stock
+    });
+
+    fetchProductos();
+    setEditando(false);
+  } catch (err) {
+    console.error(err);
+    alert("Error al actualizar producto");
+  }
+};
+
   return (
     <MainLayout>
       <div>
         <h1 className="text-2xl font-bold mb-4">Añade tus productos</h1>
         {error && <div className="text-red-600 mb-2">{error}</div>}
 
-        {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
-          <form onSubmit={crear} className="mb-4 flex gap-2 flex-wrap">
+       {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
+  <form onSubmit={crear} className="mb-4 grid grid-cols-1 md:grid-cols-5 gap-4">
 
-            {/* Nombre */}
-            <input
-              className="border p-2 rounded"
-              placeholder="Nombre"
-              value={nuevo.nombre}
-              onChange={e => setNuevo({ ...nuevo, nombre: e.target.value })}
-            />
+    {/* Nombre */}
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700">Nombre</label>
+      <input
+        className="border p-2 rounded"
+        placeholder="Ej: Camiseta azul"
+        value={nuevo.nombre}
+        onChange={e => setNuevo({ ...nuevo, nombre: e.target.value })}
+      />
+    </div>
 
-            {/* ✅ Precio con formato al escribir */}
-            <input
-              className="border p-2 rounded"
-              placeholder="Precio"
-              value={nuevo.precio ? formatCOP(nuevo.precio) : ''}
-              onChange={(e) => {
-                const raw = limpiarNumero(e.target.value);
-                setNuevo({ ...nuevo, precio: raw });
-              }}
-            />
+    {/* Precio de venta */}
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700">Precio de venta</label>
+      <input
+        className="border p-2 rounded"
+        placeholder="Ej: 50.000"
+        value={nuevo.precio ? formatCOP(nuevo.precio) : ''}
+        onChange={(e) => {
+          const raw = limpiarNumero(e.target.value);
+          setNuevo({ ...nuevo, precio: raw });
+        }}
+      />
+    </div>
 
-            {/* ✅ Precio de compra también con formato */}
-            <input
-              className="border p-2 rounded"
-              placeholder="Precio compra"
-              value={nuevo.precio_compra ? formatCOP(nuevo.precio_compra) : ''}
-              onChange={(e) => {
-                const raw = limpiarNumero(e.target.value);
-                setNuevo({ ...nuevo, precio_compra: raw });
-              }}
-            />
+    {/* Precio de compra */}
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700">Precio de costo</label>
+      <input
+        className="border p-2 rounded"
+        placeholder="Ej: 35.000"
+        value={nuevo.precio_compra ? formatCOP(nuevo.precio_compra) : ''}
+        onChange={(e) => {
+          const raw = limpiarNumero(e.target.value);
+          setNuevo({ ...nuevo, precio_compra: raw });
+        }}
+      />
+    </div>
 
-            <input
-              className="border p-2 rounded"
-              placeholder="Stock"
-              value={nuevo.stock}
-              onChange={e => setNuevo({ ...nuevo, stock: limpiarNumero(e.target.value) })}
-            />
+    {/* Stock */}
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700">Stock</label>
+      <input
+        type="number"
+        className="border p-2 rounded"
+        placeholder="Ej: 10"
+        value={nuevo.stock}
+        onChange={e => setNuevo({ ...nuevo, stock: limpiarNumero(e.target.value) })}
+      />
+    </div>
 
-            <button className="bg-green-600 text-white px-4 rounded hover:bg-green-700">
-              Crear
-            </button>
-          </form>
-        )}
+    {/* Botón */}
+    <div className="flex items-end">
+      <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer w-full">
+        Crear
+      </button>
+    </div>
+
+  </form>
+)}
+
 
         <h1 className="text-2xl font-bold mb-4">Productos</h1>
 
@@ -1260,10 +1734,10 @@ const Productos = () => {
 
         <DataTable
           columns={[
-            { key: 'id_producto', label: '#', className: 'w-12 text-left' },
-            { key: 'nombre', label: 'Nombre', className: 'w-1/3 text-left' },
-            { key: 'precio', label: 'Precio', className: 'w-24 text-right', render: (r) => r.precio },
-            { key: 'stock', label: 'Stock', className: 'w-24 text-left' }
+            { key: 'id_producto', label: '#', className: 'w-1/20 text-left' },
+            { key: 'nombre', label: 'Nombre', className: 'w-1/5 text-left ' },
+            { key: 'precio', label: 'Precio', className: 'w-1/5 text-left', render: (r) => formatCOP(r.precio) },
+            { key: 'stock', label: 'Stock', className: 'w-1/5 text-left' }
           ]}
           data={productosFiltrados}
           rowKey="id_producto"
@@ -1271,10 +1745,16 @@ const Productos = () => {
             <>
               <button
                 onClick={() => eliminar(p.id_producto)}
-                className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full hover:bg-red-200"
+                className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full hover:bg-red-200 cursor-pointer"
               >
                 Eliminar
               </button>
+              <button
+                  onClick={() => comenzarEdicion(p)}
+                  className="bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full hover:bg-yellow-200 cursor-pointer"
+                >
+                  Editar
+                </button>
 
               <button
                 onClick={() => {
@@ -1285,7 +1765,7 @@ const Productos = () => {
                       .catch(err => alert(err.response?.data?.error || "Error al añadir stock"));
                   }
                 }}
-                className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full hover:bg-green-200"
+                className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full hover:bg-green-200 cursor-pointer"
               >
                 + Añadir stock
               </button>
@@ -1293,6 +1773,59 @@ const Productos = () => {
           )}
         />
       </div>
+
+      {editando && (
+        
+  <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center z-50">
+    
+    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 className="text-lg font-bold mb-4">Editar Producto</h2>
+
+      <div className="flex flex-col gap-3">
+        <label>Nombre</label>
+        <input
+          className="border p-2 rounded"
+          value={productoEditado.nombre}
+          onChange={e => setProductoEditado({ ...productoEditado, nombre: e.target.value })}
+        />
+
+        <label>Precio (Ej: 50.000)</label>
+        <input
+          className="border p-2 rounded"
+          value={formatCOP(productoEditado.precio)}
+          onChange={e => setProductoEditado({ ...productoEditado, precio: limpiarNumero(e.target.value) })}
+        />
+
+        <label>Stock</label>
+        <input
+          type="number"
+          className="border p-2 rounded"
+          value={productoEditado.stock}
+          onChange={e => setProductoEditado({ ...productoEditado, stock: limpiarNumero(e.target.value) })}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 mt-4">
+        <button
+          onClick={() => setEditando(false)}
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+        >
+          Cancelar
+        </button>
+
+        <button
+          onClick={guardarEdicion}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Guardar
+        </button>
+      </div>
+    </div>
+    
+  </div>
+  
+)}
+
     </MainLayout>
   );
 };
@@ -1340,16 +1873,16 @@ const Reportes = () => {
           <div>
             <label className="text-sm font-medium">Fecha inicio</label>
             <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)}
-              className="border p-2 rounded w-full" />
+              className="border p-2 rounded w-full cursor-pointer" />
           </div>
           <div>
             <label className="text-sm font-medium">Fecha fin</label>
             <input type="date" value={fin} onChange={(e) => setFin(e.target.value)}
-              className="border p-2 rounded w-full" />
+              className="border p-2 rounded w-full cursor-pointer" />
           </div>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded mt-6 md:mt-0">
-            Generar Reporte
-          </button>
+         <button className="bg-blue-600 text-white px-4 py-2 rounded md:self-end cursor-pointer hover:bg-blue-800">
+  Generar Reporte
+</button>
         </form>
 
         {/* Si ya hay reporte */}
@@ -1357,7 +1890,7 @@ const Reportes = () => {
           <div>
             <div className="bg-white p-4 rounded shadow mb-6">
               <p><strong>Fecha:</strong> {reporte.inicio} — {reporte.fin}</p>
-              <p><strong>Total ventas:</strong> {formatCurrency(reporte.total_ventas)}</p>
+              <p><strong>Total invertido:</strong> {formatCurrency(reporte.total_ventas)}</p>
               <p><strong>Ganancia total:</strong> {formatCurrency(reporte.total_ganancia)}</p>
               <p><strong>Facturas generadas:</strong> {reporte.cantidad_facturas}</p>
             </div>

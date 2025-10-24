@@ -38,16 +38,16 @@ const Reportes = () => {
           <div>
             <label className="text-sm font-medium">Fecha inicio</label>
             <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)}
-              className="border p-2 rounded w-full" />
+              className="border p-2 rounded w-full cursor-pointer" />
           </div>
           <div>
             <label className="text-sm font-medium">Fecha fin</label>
             <input type="date" value={fin} onChange={(e) => setFin(e.target.value)}
-              className="border p-2 rounded w-full" />
+              className="border p-2 rounded w-full cursor-pointer" />
           </div>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded mt-6 md:mt-0 cursor-pointer">
-            Generar Reporte
-          </button>
+         <button className="bg-blue-600 text-white px-4 py-2 rounded md:self-end cursor-pointer hover:bg-blue-800">
+  Generar Reporte
+</button>
         </form>
 
         {/* Si ya hay reporte */}

@@ -13,6 +13,8 @@ import FacturasList from './pages/FacturasList'
 import Home from './pages/Home'
 import Empleados from './pages/Empleados'
 import Reportes from './pages/Reportes'
+import PerfilUsuario from './pages/PerfilUsuario'
+
 
 const PrivateRoute = ({ children, roles = [] }) => {
   const { user } = React.useContext(AuthContext)
@@ -46,6 +48,7 @@ export default function App() {
           <Route path="/facturas" element={<PrivateRoute roles={["cajero","vendedor"]}><Facturas /></PrivateRoute>} />
           <Route path="/facturas/ver" element={<PrivateRoute roles={["admin","vendedor","cajero"]}><FacturasList /></PrivateRoute>} />
          <Route path="/admin" element={<PrivateRoute roles={["superadmin",]}><AdminPanel /></PrivateRoute>} />
+         <Route path="/perfil" element={<PrivateRoute roles={["admin","superadmin","cajero","vendedor"]}><PerfilUsuario /></PrivateRoute>} />
 
         </Routes>
       </BrowserRouter>

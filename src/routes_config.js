@@ -8,6 +8,14 @@ export const appRoutes = [
     label: 'Dashboard',
     roles: ['admin', 'superadmin', 'cajero', 'vendedor'],
   },
+
+  // ✅ 📌 Nueva ruta del Perfil (visible para todos los logueados)
+  {
+    path: '/perfil',
+    label: 'Mi Perfil',
+    roles: ['admin', 'superadmin', 'cajero', 'vendedor'],
+  },
+  
   
   // 🔐 Rutas para admin: Empleados
   { path: "/empleados", 

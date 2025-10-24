@@ -11,7 +11,9 @@ const AdminPanel = () => {
     email_contacto: '',
     nombre_admin: '',
     email_admin: '',
-    password_admin: ''
+    password_admin: '',
+    direccion_admin: '',
+    telefono_admin: ''
   })
   const [search, setSearch] = useState('')
 
@@ -33,7 +35,9 @@ const AdminPanel = () => {
       email_contacto: '',
       nombre_admin: '',
       email_admin: '',
-      password_admin: ''
+      password_admin: '',
+      direccion_admin: '',
+      telefono_admin: ''
     })
     fetchAdmins()
   }
@@ -64,6 +68,12 @@ const AdminPanel = () => {
           <input className="border p-2 rounded" type="password" placeholder="Contraseña del administrador"
             value={nuevo.password_admin}
             onChange={e => setNuevo({ ...nuevo, password_admin: e.target.value })} />
+          <input className="border p-2 rounded" placeholder="Dirección del administrador"
+            value={nuevo.direccion_admin}
+            onChange={e => setNuevo({ ...nuevo, direccion_admin: e.target.value })} />
+          <input className="border p-2 rounded" placeholder="Teléfono del administrador"
+            value={nuevo.telefono_admin}
+            onChange={e => setNuevo({ ...nuevo, telefono_admin: e.target.value })} />
           <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full cursor-pointer">Crear negocio y admin</button>
         </form>
 

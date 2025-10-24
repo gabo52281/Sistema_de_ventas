@@ -107,7 +107,6 @@ const Empleados = () => {
             onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value })}
           >
             <option value="cajero">Cajero</option>
-            <option value="vendedor">Vendedor</option>
           </select>
           <button className="bg-green-600 text-white px-4 py-2 rounded col-span-full cursor-pointer">
             Crear empleado

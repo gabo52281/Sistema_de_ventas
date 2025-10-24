@@ -32,9 +32,10 @@ const Productos = () => {
 
   // 👉 Función para formatear número como moneda local COP (ej: 50.000)
   const formatCOP = (value) => {
-    if (!value) return '';
-    return new Intl.NumberFormat('es-CO').format(value);
-  };
+  if (!value && value !== 0) return '';
+  return `$ ${new Intl.NumberFormat('es-CO').format(value)}`;
+};
+
 
   const crear = async (e) => {
     e.preventDefault();
@@ -171,7 +172,7 @@ const guardarEdicion = async () => {
           columns={[
             { key: 'id_producto', label: '#', className: 'w-1/20 text-left' },
             { key: 'nombre', label: 'Nombre', className: 'w-1/5 text-left ' },
-            { key: 'precio', label: 'Precio', className: 'w-1/5 text-left', render: (r) => r.precio },
+            { key: 'precio', label: 'Precio', className: 'w-1/5 text-left', render: (r) => formatCOP(r.precio) },
             { key: 'stock', label: 'Stock', className: 'w-1/5 text-left' }
           ]}
           data={productosFiltrados}
@@ -210,7 +211,9 @@ const guardarEdicion = async () => {
       </div>
 
       {editando && (
-  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        
+  <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center z-50">
+    
     <div className="bg-white p-6 rounded-lg shadow-lg w-96">
       <h2 className="text-lg font-bold mb-4">Editar Producto</h2>
 
@@ -254,7 +257,9 @@ const guardarEdicion = async () => {
         </button>
       </div>
     </div>
+    
   </div>
+  
 )}
 
     </MainLayout>

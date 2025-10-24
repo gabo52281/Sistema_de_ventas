@@ -26,12 +26,15 @@ export const AuthProvider = ({ children }) => {
       const res = await api.post('/auth/login', { email, password })
       // backend expected: { token, rol, id_usuario, id_admin }
       const payload = {
-        token: res.data.token,
+       token: res.data.token,
         rol: res.data.rol,
         id_usuario: res.data.id_usuario || null,
         id_admin: res.data.id_admin || null,
         nombre: res.data.nombre || null,
-        nombre_negocio: res.data.nombre_negocio || null
+        nombre_negocio: res.data.nombre_negocio || null,
+        email: res.data.correo || null,
+        telefono: res.data.telefono || null,     // ✅ nuevo
+        direccion: res.data.direccion || null    // ✅ nuevo
       }
       setUser(payload)
       return payload
@@ -43,7 +46,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => setUser(null)
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, setUser,login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )
