@@ -40,6 +40,8 @@ return (
 
     {/* CONTENEDOR DEL LOGIN */}
     <form
+      autoComplete="on"
+
       onSubmit={submit}
       className="bg-white/95 backdrop-blur-sm p-10 rounded-2xl shadow-2xl w-full max-w-sm space-y-6 relative z-10 border border-white/20"
     >
@@ -57,25 +59,34 @@ return (
       <div className="space-y-4">
         <div className="relative">
           <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full border border-gray-300 p-3.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
-          />
+  type="email"
+  autocomplete="email"
+  name="email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  placeholder="Email"
+  className="w-full border border-gray-300 p-3.5 rounded-lg"
+/>
         </div>
 
         <div className="relative">
           <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            placeholder="Contraseña"
-            className="w-full border border-gray-300 p-3.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
-          />
+  type="password"
+  autocomplete="current-password"
+  name="password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  placeholder="Contraseña"
+  className="w-full border border-gray-300 p-3.5 rounded-lg"
+/>
         </div>
       </div>
 
-      <button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer">
+      <button
+        type="submit"
+
+      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer">
+        
         Entrar
       </button>
 

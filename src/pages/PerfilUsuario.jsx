@@ -8,6 +8,8 @@ const PerfilUsuario = () => {
   const { user, setUser } = useContext(AuthContext);
   const { addToast } = useContext(ToastContext);
 
+  const [editando, setEditando] = useState(false);
+
   const [form, setForm] = useState({
     nombre: user?.nombre || "",
     email: user?.email || "",
@@ -28,15 +30,25 @@ const PerfilUsuario = () => {
         direccion: form.direccion,
       });
 
-      // ✅ Actualizar datos en el AuthContext y LocalStorage
       const updatedUser = { ...user, ...form };
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
       addToast("Perfil actualizado", "success");
+      setEditando(false);
     } catch (error) {
       addToast("Error al actualizar perfil", "error");
     }
+  };
+
+  const cancelarEdicion = () => {
+    setForm({
+      nombre: user?.nombre || "",
+      email: user?.email || "",
+      telefono: user?.telefono || "",
+      direccion: user?.direccion || "",
+    });
+    setEditando(false);
   };
 
   return (
@@ -51,7 +63,8 @@ const PerfilUsuario = () => {
               name="nombre"
               value={form.nombre}
               onChange={handleChange}
-              className="border p-2 rounded w-full"
+              disabled={!editando}
+              className={`border p-2 rounded w-full ${!editando && "bg-gray-200"}`}
             />
           </div>
 
@@ -60,7 +73,7 @@ const PerfilUsuario = () => {
             <input
               value={form.email}
               disabled
-              className="border p-2 rounded w-full bg-gray-100"
+              className="border p-2 rounded w-full bg-gray-200"
             />
           </div>
 
@@ -70,7 +83,8 @@ const PerfilUsuario = () => {
               name="telefono"
               value={form.telefono}
               onChange={handleChange}
-              className="border p-2 rounded w-full"
+              disabled={!editando}
+              className={`border p-2 rounded w-full ${!editando && "bg-gray-200"}`}
             />
           </div>
 
@@ -80,13 +94,40 @@ const PerfilUsuario = () => {
               name="direccion"
               value={form.direccion}
               onChange={handleChange}
-              className="border p-2 rounded w-full"
+              disabled={!editando}
+              className={`border p-2 rounded w-full ${!editando && "bg-gray-200"}`}
             />
           </div>
 
-          <button className="bg-blue-600 text-white px-4 py-2 rounded w-full">
-            Guardar cambios
-          </button>
+          {/* ✅ Botones que aparecen/desaparecen según el estado */}
+          {!editando ? (
+            // ✅ Solo aparece cuando NO se está editando
+            <button
+              type="button"
+              onClick={() => setEditando(true)}
+              className="bg-yellow-500 text-white px-4 py-2 rounded w-full cursor-pointer"
+            >
+              Editar
+            </button>
+          ) : (
+            // ✅ Solo aparece cuando SÍ se está editando
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="bg-blue-600 text-white px-4 py-2 rounded w-full cursor-pointer"
+              >
+                Guardar cambios
+              </button>
+
+              <button
+                type="button"
+                onClick={cancelarEdicion}
+                className="bg-gray-400 text-white px-4 py-2 rounded w-full cursor-pointer"
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </MainLayout>
