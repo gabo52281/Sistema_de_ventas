@@ -63,57 +63,105 @@ const Productos = () => {
     p.nombre.toLowerCase().includes(search.toLowerCase())
   );
 
+  const [editando, setEditando] = useState(false);
+const [productoEditado, setProductoEditado] = useState({ id: null, nombre: '', precio: '', stock: '' });
+
+const comenzarEdicion = (producto) => {
+  setProductoEditado({
+    id: producto.id_producto,
+    nombre: producto.nombre,
+    precio: producto.precio,
+    stock: producto.stock
+  });
+  setEditando(true);
+};
+
+const guardarEdicion = async () => {
+  try {
+    await api.put(`/productos/${productoEditado.id}`, {
+      nombre: productoEditado.nombre,
+      precio: productoEditado.precio,
+      stock: productoEditado.stock
+    });
+
+    fetchProductos();
+    setEditando(false);
+  } catch (err) {
+    console.error(err);
+    alert("Error al actualizar producto");
+  }
+};
+
   return (
     <MainLayout>
       <div>
         <h1 className="text-2xl font-bold mb-4">Añade tus productos</h1>
         {error && <div className="text-red-600 mb-2">{error}</div>}
 
-        {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
-          <form onSubmit={crear} className="mb-4 flex gap-2 flex-wrap">
+       {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
+  <form onSubmit={crear} className="mb-4 grid grid-cols-1 md:grid-cols-5 gap-4">
 
-            {/* Nombre */}
-            <input
-              className="border p-2 rounded"
-              placeholder="Nombre"
-              value={nuevo.nombre}
-              onChange={e => setNuevo({ ...nuevo, nombre: e.target.value })}
-            />
+    {/* Nombre */}
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700">Nombre</label>
+      <input
+        className="border p-2 rounded"
+        placeholder="Ej: Camiseta azul"
+        value={nuevo.nombre}
+        onChange={e => setNuevo({ ...nuevo, nombre: e.target.value })}
+      />
+    </div>
 
-            {/* ✅ Precio con formato al escribir */}
-            <input
-              className="border p-2 rounded"
-              placeholder="Precio"
-              value={nuevo.precio ? formatCOP(nuevo.precio) : ''}
-              onChange={(e) => {
-                const raw = limpiarNumero(e.target.value);
-                setNuevo({ ...nuevo, precio: raw });
-              }}
-            />
+    {/* Precio de venta */}
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700">Precio de venta</label>
+      <input
+        className="border p-2 rounded"
+        placeholder="Ej: 50.000"
+        value={nuevo.precio ? formatCOP(nuevo.precio) : ''}
+        onChange={(e) => {
+          const raw = limpiarNumero(e.target.value);
+          setNuevo({ ...nuevo, precio: raw });
+        }}
+      />
+    </div>
 
-            {/* ✅ Precio de compra también con formato */}
-            <input
-              className="border p-2 rounded"
-              placeholder="Precio compra"
-              value={nuevo.precio_compra ? formatCOP(nuevo.precio_compra) : ''}
-              onChange={(e) => {
-                const raw = limpiarNumero(e.target.value);
-                setNuevo({ ...nuevo, precio_compra: raw });
-              }}
-            />
+    {/* Precio de compra */}
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700">Precio de costo</label>
+      <input
+        className="border p-2 rounded"
+        placeholder="Ej: 35.000"
+        value={nuevo.precio_compra ? formatCOP(nuevo.precio_compra) : ''}
+        onChange={(e) => {
+          const raw = limpiarNumero(e.target.value);
+          setNuevo({ ...nuevo, precio_compra: raw });
+        }}
+      />
+    </div>
 
-            <input
-              className="border p-2 rounded"
-              placeholder="Stock"
-              value={nuevo.stock}
-              onChange={e => setNuevo({ ...nuevo, stock: limpiarNumero(e.target.value) })}
-            />
+    {/* Stock */}
+    <div className="flex flex-col">
+      <label className="text-sm font-medium text-gray-700">Stock</label>
+      <input
+        type="number"
+        className="border p-2 rounded"
+        placeholder="Ej: 10"
+        value={nuevo.stock}
+        onChange={e => setNuevo({ ...nuevo, stock: limpiarNumero(e.target.value) })}
+      />
+    </div>
 
-            <button className="bg-green-600 text-white px-4 rounded hover:bg-green-700 cursor-pointer">
-              Crear
-            </button>
-          </form>
-        )}
+    {/* Botón */}
+    <div className="flex items-end">
+      <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer w-full">
+        Crear
+      </button>
+    </div>
+
+  </form>
+)}
+
 
         <h1 className="text-2xl font-bold mb-4">Productos</h1>
 
@@ -136,6 +184,12 @@ const Productos = () => {
               >
                 Eliminar
               </button>
+              <button
+                  onClick={() => comenzarEdicion(p)}
+                  className="bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full hover:bg-yellow-200 cursor-pointer"
+                >
+                  Editar
+                </button>
 
               <button
                 onClick={() => {
@@ -154,6 +208,55 @@ const Productos = () => {
           )}
         />
       </div>
+
+      {editando && (
+  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 className="text-lg font-bold mb-4">Editar Producto</h2>
+
+      <div className="flex flex-col gap-3">
+        <label>Nombre</label>
+        <input
+          className="border p-2 rounded"
+          value={productoEditado.nombre}
+          onChange={e => setProductoEditado({ ...productoEditado, nombre: e.target.value })}
+        />
+
+        <label>Precio (Ej: 50.000)</label>
+        <input
+          className="border p-2 rounded"
+          value={formatCOP(productoEditado.precio)}
+          onChange={e => setProductoEditado({ ...productoEditado, precio: limpiarNumero(e.target.value) })}
+        />
+
+        <label>Stock</label>
+        <input
+          type="number"
+          className="border p-2 rounded"
+          value={productoEditado.stock}
+          onChange={e => setProductoEditado({ ...productoEditado, stock: limpiarNumero(e.target.value) })}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 mt-4">
+        <button
+          onClick={() => setEditando(false)}
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+        >
+          Cancelar
+        </button>
+
+        <button
+          onClick={guardarEdicion}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </MainLayout>
   );
 };
