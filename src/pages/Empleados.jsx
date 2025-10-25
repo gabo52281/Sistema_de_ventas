@@ -8,7 +8,7 @@ import { ToastContext } from '../context/ToastContext'
 const Empleados = () => {
   const [empleados, setEmpleados] = useState([])
   const { addToast } = useContext(ToastContext)
-  const [nuevo, setNuevo] = useState({ nombre: '', email: '', password: '', rol: 'cajero' })
+  const [nuevo, setNuevo] = useState({ nombre: '', email: '', password: '', rol: 'cajero', telefono: '', direccion: '' })
   const [search, setSearch] = useState('')
   const [error, setError] = useState(null)
   
@@ -18,8 +18,10 @@ const Empleados = () => {
     id_usuario: '',
     nombre: '',
     email: '',
-    rol: 'cajero',
-    password: ''
+    rol: '',
+    password: '',
+    telefono: '',
+    direccion: ''
   })
 
   const fetchEmpleados = async () => {
@@ -34,17 +36,26 @@ const Empleados = () => {
   useEffect(() => { fetchEmpleados() }, [])
 
   const crear = async (e) => {
-    e.preventDefault()
-    try {
-      await api.post('/users/crear', nuevo)
-      setNuevo({ nombre: '', email: '', password: '', rol: 'cajero' })
-      addToast('Empleado creado exitosamente', 'success')
-      fetchEmpleados()
-    } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear empleado')
-      addToast(err.response?.data?.error || 'Error al crear empleado', 'error')
+  e.preventDefault()
+  try {
+    const payload = {
+      nombre: nuevo.nombre,
+      email: nuevo.email,
+      password: nuevo.password,
+      rol: nuevo.rol,
+      telefono: nuevo.telefono.trim() || null,  // ✅ Envía null si está vacío
+      direccion: nuevo.direccion.trim() || null // ✅ Envía null si está vacío
     }
+    
+    await api.post('/users/crear', payload)
+    setNuevo({ nombre: '', email: '', password: '', rol: 'cajero', telefono: '', direccion: '' })
+    addToast('Empleado creado exitosamente', 'success')
+    fetchEmpleados()
+  } catch (err) {
+    setError(err.response?.data?.error || 'Error al crear empleado')
+    addToast(err.response?.data?.error || 'Error al crear empleado', 'error')
   }
+}
 
   // Abrir modal de edición
   const abrirModalEditar = (empleado) => {
@@ -53,7 +64,9 @@ const Empleados = () => {
       nombre: empleado.nombre,
       email: empleado.email,
       rol: empleado.rol,
-      password: '' // Vacío por defecto
+      password: '',
+      telefono: empleado.telefono,
+      direccion: empleado.direccion
     })
     setModalEditar(true)
   }
@@ -65,8 +78,10 @@ const Empleados = () => {
       id_usuario: '',
       nombre: '',
       email: '',
-      rol: 'cajero',
-      password: ''
+      rol: '',
+      password: '',
+     telefono: nuevo.telefono.trim() || null,  // ✅ Envía null si está vacío
+      direccion: nuevo.direccion.trim() || null // ✅ Envía null si está vacío
     })
   }
 
@@ -77,7 +92,10 @@ const Empleados = () => {
       const payload = {
         nombre: empleadoEditar.nombre,
         email: empleadoEditar.email,
-        rol: empleadoEditar.rol
+        rol: empleadoEditar.rol,
+        telefono: empleadoEditar.telefono,
+        direccion: empleadoEditar.direccion
+
       }
       // Solo incluir password si se escribió algo
       if (empleadoEditar.password && empleadoEditar.password.trim() !== '') {
@@ -138,6 +156,31 @@ const Empleados = () => {
                 required
               />
             </div>
+            <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Teléfono
+  </label>
+  <input
+    type="tel"
+    className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    placeholder="Ej: 3112345678"
+    value={nuevo.telefono}
+    onChange={(e) => setNuevo({ ...nuevo, telefono: e.target.value })}
+  />
+</div>
+
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Dirección
+  </label>
+  <input
+    type="text"
+    className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    placeholder="Ej: Calle 123 #45-67"
+    value={nuevo.direccion || ''}
+    onChange={(e) => setNuevo({ ...nuevo, direccion: e.target.value })}
+  />
+</div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -179,7 +222,6 @@ const Empleados = () => {
                 onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value })}
               >
                 <option value="cajero">Cajero</option>
-                <option value="vendedor">Vendedor</option>
               </select>
             </div>
 
@@ -281,6 +323,19 @@ const Empleados = () => {
                     required
                   />
                 </div>
+            <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Teléfono
+  </label>
+  <input
+    type="tel"
+    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+    placeholder="Ej: 3112345678"
+    value={empleadoEditar.telefono}
+    onChange={(e) => setEmpleadoEditar({ ...empleadoEditar, telefono: e.target.value })}
+    required
+  />
+</div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
