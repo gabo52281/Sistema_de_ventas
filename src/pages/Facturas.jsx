@@ -50,15 +50,18 @@ const Facturas = () => {
   setItems([...items, { id_producto: '', cantidad: 1, query: '' }]);
 
   const updateItem = (idx, field, value) => {
-    const newItems = [...items];
-    // normalizar cantidad a número
-    if (field === 'cantidad') {
-      newItems[idx][field] = Number(value);
-    } else {
-      newItems[idx][field] = value;
-    }
-    setItems(newItems);
-  };
+  const newItems = [...items];
+
+  if (field === 'cantidad') {
+    // Permitir campo vacío para que no aparezca el cero
+    newItems[idx][field] = value === '' ? '' : Number(value);
+  } else {
+    newItems[idx][field] = value;
+  }
+
+  setItems(newItems);
+};
+
 
   const removeItem = (idx) => {
     setItems(prev => prev.filter((_, i) => i !== idx));
@@ -169,8 +172,13 @@ const assignIdByName = (idx) => {
                           </ul>
                         )}
                       </div>
-                      <input type="number" className="w-24 border border-gray-300 p-2 rounded-lg " value={it.cantidad}
-                        onChange={e => updateItem(idx, 'cantidad', e.target.value)} />
+                      <input
+  type="number"
+  className="w-24 border border-gray-300 p-2 rounded-lg"
+  value={it.cantidad === '' ? '' : it.cantidad}
+  onChange={(e) => updateItem(idx, 'cantidad', e.target.value)}
+/>
+
                       <button type="button" onClick={() => removeItem(idx)} className="ml-2 text-sm bg-red-100 text-red-700 px-3 py-1 rounded">Eliminar</button>
                     </div>
                   );
@@ -242,7 +250,19 @@ const assignIdByName = (idx) => {
                   placeholder="Ej: 50.000"
                   value={pagoCliente ? formatCurrency(pagoCliente) : ''}
                   onChange={(e) => { const raw = e.target.value.replace(/[^0-9]/g, ''); setPagoCliente(raw); }} />
-                <p className="text-sm text-black-400">Vuelto: {formatCurrency(vuelto)}</p>
+                {/* Vuelto o Falta dependiendo del pago */}
+{pagoCliente !== '' && (
+  Number(pagoCliente) >= totalActual ? (
+    <p className="text-sm font-medium text-green-600">
+      Vuelto: {formatCurrency(vuelto)}
+    </p>
+  ) : (
+    <p className="text-sm font-medium text-red-600">
+      Falta: {formatCurrency(totalActual - Number(pagoCliente))}
+    </p>
+  )
+)}
+
               </div>
 
               <div className="sticky bottom-6">
