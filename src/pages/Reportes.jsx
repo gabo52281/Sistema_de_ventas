@@ -55,7 +55,7 @@ const Reportes = () => {
           <div>
             <div className="bg-white p-4 rounded shadow mb-6">
               <p><strong>Fecha:</strong> {reporte.inicio} — {reporte.fin}</p>
-              <p><strong>Total invertido:</strong> {formatCurrency(reporte.total_ventas)}</p>
+              <p><strong>Total ventas:</strong> {formatCurrency(reporte.total_ventas)}</p>
               <p><strong>Ganancia total:</strong> {formatCurrency(reporte.total_ganancia)}</p>
               <p><strong>Facturas generadas:</strong> {reporte.cantidad_facturas}</p>
             </div>
